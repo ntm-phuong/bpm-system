@@ -1,0 +1,40 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "spfx-bpm-system-client-side-solution",
+    "id": "520a1907-405e-4ed6-9aeb-aa85d54c4c74",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "developer": {
+      "name": "",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.20.0"
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "spfx-bpm-system description"
+      },
+      "longDescription": {
+        "default": "spfx-bpm-system description"
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "spfx-bpm-system Feature",
+        "description": "The feature that activates elements of the spfx-bpm-system solution.",
+        "id": "b245c03c-e06a-473b-b76e-d31c3947cb7e",
+        "version": "1.0.0.0"
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/spfx-bpm-system.sppkg"
+  }
+}
