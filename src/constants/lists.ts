@@ -1,6 +1,6 @@
 export const LISTS = {
   PROCESSES:        'Processes',
-  PROCESS_STEPS:    'ProcessSteps',
+  PROCESS_STEPS:    'ProcessStep',
   FIELD_CONFIG:     'FieldConfig',
   MAIL_TEMPLATES:   'MailTemplates',
   LEAVE_OF_ABSENCE: 'LeaveOfAbsence',

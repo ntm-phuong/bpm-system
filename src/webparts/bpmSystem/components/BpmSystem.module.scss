@@ -1,34 +1,219 @@
 @import '~@fluentui/react/dist/sass/References.scss';
 
 .bpmSystem {
-  overflow: hidden;
-  padding: 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
   color: "[theme:bodyText, default: #323130]";
   color: var(--bodyText);
-  &.teams {
-    font-family: $ms-font-family-fallbacks;
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+  padding: 28px 32px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #ffffff 0%, #f4f8ff 100%);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+}
+
+.pageEyebrow {
+  display: inline-block;
+  margin-bottom: 10px;
+  color: #0b6fe8;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pageTitle {
+  margin: 0;
+  color: #0f172a;
+  font-size: 32px;
+  line-height: 1.15;
+}
+
+.pageDescription {
+  max-width: 760px;
+  margin: 12px 0 0;
+  color: #475569;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.userMeta {
+  min-width: 220px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgba(11, 111, 232, 0.06);
+}
+
+.metaLabel {
+  display: block;
+  margin-bottom: 6px;
+  color: #64748b;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.metaValue {
+  color: #0f172a;
+  font-size: 16px;
+}
+
+.pageGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: 20px;
+  min-width: 0;
+}
+
+.primaryCard,
+.secondaryCard {
+  min-width: 0;
+  padding: 24px 28px;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
+}
+
+.cardTitle {
+  margin: 0 0 12px;
+  color: #0f172a;
+  font-size: 20px;
+}
+
+.cardText {
+  margin: 0;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.metricsRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.metricItem {
+  min-width: 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #f8fbff;
+  border: 1px solid #e4efff;
+}
+
+.metricLabel {
+  display: block;
+  margin-bottom: 6px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.metricValue {
+  color: #0f172a;
+  font-size: 16px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.apiGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.apiCard {
+  min-width: 0;
+  padding: 20px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.apiCardTitle {
+  margin: 0 0 12px;
+  color: #0f172a;
+  font-size: 16px;
+}
+
+.employeeDetails {
+  margin: 0;
+}
+
+.employeeDetails > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.employeeDetails dt {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.employeeDetails dd {
+  margin: 0;
+  color: #0f172a;
+  font-size: 13px;
+  text-align: right;
+  word-break: break-word;
+}
+
+.jsonBlock {
+  max-height: 260px;
+  margin: 12px 0 0;
+  padding: 12px;
+  overflow: auto;
+  border-radius: 10px;
+  background: #0b1220;
+  color: #d6e2ff;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.emptyText {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.errorText {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 14px;
+}
+
+.contextHint {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+@media (max-width: 960px) {
+  .pageHeader {
+    flex-direction: column;
   }
-}
 
-.welcome {
-  text-align: center;
-}
+  .userMeta {
+    min-width: 0;
+    width: 100%;
+  }
 
-.welcomeImage {
-  width: 100%;
-  max-width: 420px;
-}
+  .pageGrid {
+    grid-template-columns: 1fr;
+  }
 
-.links {
-  a {
-    text-decoration: none;
-    color: "[theme:link, default:#03787c]";
-    color: var(--link); // note: CSS Custom Properties support is limited to modern browsers only
-
-    &:hover {
-      text-decoration: underline;
-      color: "[theme:linkHovered, default: #014446]";
-      color: var(--linkHovered); // note: CSS Custom Properties support is limited to modern browsers only
-    }
+  .metricsRow,
+  .apiGrid {
+    grid-template-columns: 1fr;
   }
 }
