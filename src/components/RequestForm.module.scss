@@ -1,0 +1,109 @@
+.formContainer {
+  background-color: #ffffff;
+  border: 1px solid #e1dfdd;
+  border-radius: 4px;
+  padding: 24px;
+  margin-top: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* --- Header & Nút Thu gọn --- */
+.formHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.formTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #201f1e;
+  margin: 0;
+}
+
+.collapseButton {
+  background-color: #2b88d8;
+  color: #ffffff;
+  border: none;
+  border-radius: 2px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #1a74c2;
+  }
+}
+
+/* --- Layout 2 cột --- */
+.formBody {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 25px; /* Cố định khoảng cách để các hàng 2 cột thẳng nhau */
+  align-items: start;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr; /* Xuống 1 cột trên màn hình nhỏ */
+  }
+}
+
+/* --- Khối Cột --- */
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* --- Các ô Input --- */
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #323130;
+  margin-bottom: 8px;
+
+  .required {
+    color: #a4262c; /* Màu đỏ cho dấu sao */
+    margin-left: 4px;
+  }
+}
+
+.inputControl {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #323130;
+  border: 1px solid #8a8886;
+  border-radius: 4px;
+  outline: none;
+  background-color: #ffffff;
+  font-family: inherit;
+  transition: border-color 0.2s;
+
+  &:focus {
+    border-color: #2b88d8;
+  }
+
+  &::placeholder {
+    color: #979593;
+  }
+}
+
+select.inputControl {
+  cursor: pointer;
+}
+
+textarea.inputControl {
+  resize: vertical;
+  min-height: 80px;
+}

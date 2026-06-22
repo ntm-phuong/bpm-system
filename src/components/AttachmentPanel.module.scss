@@ -1,0 +1,104 @@
+.attachmentCard {
+  background-color: #ffffff;
+  border: 1px solid #e1dfdd;
+  padding: 16px 20px 24px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 1.6px 3.6px 0 rgba(0, 0, 0, 0.132), 0 0.3px 0.9px 0 rgba(0, 0, 0, 0.108);
+
+  .headerTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: #323130;
+    margin-top: 0;
+    margin-bottom: 16px;
+  }
+
+  .dropzone {
+    border: 1px dashed #a19f9d;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    background-color: #faf9f8;
+    transition: all 0.2s ease;
+
+    /* Hiệu ứng khi kéo file vào vùng này */
+    &.dragging {
+      background-color: #e1dfdd;
+      border-color: #0078d4;
+    }
+
+    .addFileBtn {
+      background-color: #4da0ff; /* Chỉnh màu xanh giống trong ảnh thiết kế */
+      border-color: #4da0ff;
+      border-radius: 2px;
+      height: 32px;
+      padding: 0 16px;
+
+      &:hover {
+        background-color: #2b88f5;
+        border-color: #2b88f5;
+      }
+
+      .attachIcon {
+        margin-right: 8px;
+        transform: rotate(-45deg); /* Xoay icon ghim giấy một chút cho giống ảnh */
+      }
+    }
+
+    .dragHint {
+      margin-left: 16px;
+      color: #605e5c;
+      font-size: 13px;
+      font-style: italic;
+    }
+  }
+
+  /* Style cho danh sách file đã chọn */
+  .fileList {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .fileItem {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      background-color: #f3f2f1;
+      border-radius: 4px;
+
+      .fileIcon {
+        font-size: 16px;
+        color: #0078d4;
+        margin-right: 8px;
+      }
+
+      .fileName {
+        font-size: 13px;
+        color: #323130;
+        font-weight: 500;
+        margin-right: 8px;
+        max-width: 300px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .fileSize {
+        font-size: 12px;
+        color: #605e5c;
+        flex-grow: 1;
+      }
+
+      .removeBtn {
+        height: 24px;
+        width: 24px;
+        color: #a4262c;
+
+        &:hover {
+          background-color: #fde7e9;
+        }
+      }
+    }
+  }
+}

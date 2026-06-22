@@ -1,0 +1,140 @@
+.container {
+  background-color: #ffffff;
+  border: 1px solid #e1dfdd;
+  border-radius: 4px;
+  padding: 24px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-top: 20px;
+}
+
+/* --- Chú thích trạng thái (Legend) --- */
+.legendContainer {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: #323130;
+
+  .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+  }
+}
+
+.title {
+  text-align: center;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 24px;
+  color: #201f1e;
+}
+
+/* --- Luồng trạng thái (Arrows) --- */
+.stepsWrapper {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  // Chừa khoảng trống bên phải cho mũi tên của item cuối cùng
+  padding-right: 24px; 
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    padding-right: 0;
+    gap: 16px; // Khoảng cách khi xếp dọc
+  }
+}
+
+.stepColumn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  
+  // Xử lý z-index để mũi tên trước đè lên rãnh của mũi tên sau
+  &:nth-child(1) { z-index: 5; }
+  &:nth-child(2) { z-index: 4; }
+  &:nth-child(3) { z-index: 3; }
+  &:nth-child(4) { z-index: 2; }
+  &:nth-child(5) { z-index: 1; }
+}
+
+.stepArrow {
+  position: relative;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: 500;
+  font-size: 14px;
+  margin-right: 4px; // Khoảng hở giữa các mũi tên
+  background-color: var(--step-color, #7C8196); // Nhận màu từ inline style React
+
+  /* Tạo mũi tên nhọn bên phải */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -24px; // Phải bằng nửa chiều cao (48/2) để tạo góc 45 độ
+    width: 0;
+    height: 0;
+    border-top: 24px solid transparent;
+    border-bottom: 24px solid transparent;
+    border-left: 24px solid var(--step-color, #7C8196);
+    z-index: 2;
+  }
+
+  /* Tạo rãnh khuyết bên trái */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+    border-top: 24px solid transparent;
+    border-bottom: 24px solid transparent;
+    border-left: 24px solid #ffffff; // Màu trắng trùng với nền container
+    z-index: 1;
+  }
+}
+
+/* Bỏ rãnh khuyết cho item đầu tiên trên Desktop */
+.stepColumn:first-child .stepArrow::before {
+  display: none;
+}
+
+.assignee {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #605e5c;
+  padding-left: 16px; // Thụt lề nhẹ cho cân đối với mũi tên
+  min-height: 20px;
+}
+
+/* --- Responsive Tablet / Mobile --- */
+@media (max-width: 768px) {
+  .stepArrow {
+    margin-right: 0;
+    
+    // Trên tablet, bên trái phẳng lì, không có rãnh khuyết
+    &::before {
+      display: none; 
+    }
+    
+    // Mũi tên bên phải vẫn giữ nguyên để chĩa sang phải
+  }
+  
+  .assignee {
+    padding-left: 0; // Trả lề về 0 vì mũi tên giờ phẳng bên trái
+  }
+}

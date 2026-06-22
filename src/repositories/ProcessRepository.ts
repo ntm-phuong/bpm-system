@@ -1,0 +1,296 @@
+
+import { BaseRepository } from './BaseRepository';
+import { IProcess, IProcessStep, IFieldConfig } from '../models';
+import { LISTS } from '../constants/lists';
+import { FieldType } from '../constants/enums';
+
+// ─── Select / Expand constants ─────────────────────────────
+// Định nghĩa một lần, dùng lại trong mọi query
+// Giúp tránh quên field khi viết nhiều methods
+
+const PROCESS_SELECT = [
+  'Id', 'Title', 'ProcessCode', 'Description', 'IsActive',
+] as const;
+
+const STEP_SELECT = [
+  'Id', 'Title', 'ProcessIDId', 'StepOrder',
+  'IsActive',
+] as const;
+
+const FIELD_CONFIG_SELECT = [
+  'Id', 'Title', 'ProcessIDId', 'StepIDId',
+  'ComponentType',
+  'FieldInternalName', 'FieldDisplayName',
+  'FieldType', 'FieldOptions', 'IsRequired', 'IsVisible', 'IsEditable',
+] as const;
+
+// ─── Repository ────────────────────────────────────────────
+
+export class ProcessRepository extends BaseRepository {
+
+  // ═══════════════════════════════════════════════════════
+  // PROCESSES
+  // ═══════════════════════════════════════════════════════
+
+  // Lấy tất cả quy trình đang active, sắp xếp theo tên
+  async getAllActive(): Promise<IProcess[]> {
+    try {
+      const items = await this.sp.web.lists
+        .getByTitle(LISTS.PROCESSES)
+        .items
+        .select(...PROCESS_SELECT)
+        .filter('IsActive eq 1')
+        .orderBy('Title', true)();
+
+      return items.map(this._mapProcess);
+    } catch (e) {
+      this.handleError(e, 'getAllActive');
+    }
+  }
+
+  // Lấy một quy trình theo ProcessCode
+  // Dùng nhiều nhất — ProcessCode là key tìm kiếm chính trong toàn hệ thống
+  async getByCode(code: string): Promise<IProcess | null> {
+    try {
+      const items = await this.sp.web.lists
+        .getByTitle(LISTS.PROCESSES)
+        .items
+        .select(...PROCESS_SELECT)
+        .filter(`ProcessCode eq '${code}' and IsActive eq 1`)
+        .top(1)();
+
+      return items.length > 0 ? this._mapProcess(items[0]) : null;
+    } catch (e) {
+      this.handleError(e, 'getByCode');
+    }
+  }
+
+  // Lấy một quy trình theo Id
+  async getById(id: number): Promise<IProcess | null> {
+    try {
+      const item = await this.sp.web.lists
+        .getByTitle(LISTS.PROCESSES)
+        .items
+        .getById(id)
+        .select(...PROCESS_SELECT)();
+
+      return item ? this._mapProcess(item) : null;
+    } catch (e) {
+      this.handleError(e, 'getById');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // PROCESS STEPS
+  // ═══════════════════════════════════════════════════════
+
+  // Lấy tất cả bước active của một quy trình, sắp xếp theo StepOrder
+  // Đây là query dùng nhiều nhất khi khởi tạo form và flow phê duyệt
+  async getStepsByProcessId(processId: number): Promise<IProcessStep[]> {
+    try {
+      const items = await this.sp.web.lists
+        .getByTitle(LISTS.PROCESS_STEPS)
+        .items
+        .select(...STEP_SELECT)
+        .filter(`ProcessIDId eq ${processId} and IsActive eq 1`)
+        .orderBy('StepOrder', true)();
+
+      return items.map(this._mapStep.bind(this));
+    } catch (e) {
+      this.handleError(e, 'getStepsByProcessId');
+    }
+  }
+
+  // Lấy một bước theo Id
+  async getStepById(stepId: number): Promise<IProcessStep | null> {
+    try {
+      const item = await this.sp.web.lists
+        .getByTitle(LISTS.PROCESS_STEPS)
+        .items
+        .getById(stepId)
+        .select(...STEP_SELECT)();
+
+      return item ? this._mapStep(item) : null;
+    } catch (e) {
+      this.handleError(e, 'getStepById');
+    }
+  }
+
+  // Lấy bước theo thứ tự (StepOrder) trong một quy trình
+  // Dùng khi cần biết "bước số 2 của quy trình này là gì"
+  async getStepByOrder(
+    processId: number,
+    stepOrder: number
+  ): Promise<IProcessStep | null> {
+    try {
+      const items = await this.sp.web.lists
+        .getByTitle(LISTS.PROCESS_STEPS)
+        .items
+        .select(...STEP_SELECT)
+        .filter(
+          `ProcessIDId eq ${processId} and StepOrder eq ${stepOrder} and IsActive eq 1`
+        )
+        .top(1)();
+
+      return items.length > 0 ? this._mapStep(items[0]) : null;
+    } catch (e) {
+      this.handleError(e, 'getStepByOrder');
+    }
+  }
+
+  // Lấy tổng số bước active của một quy trình
+  // Dùng để xác định isLastStep trong LeaveService
+  async countSteps(processId: number): Promise<number> {
+    try {
+      const result = await this.sp.web.lists
+        .getByTitle(LISTS.PROCESS_STEPS)
+        .items
+        .filter(`ProcessIDId eq ${processId} and IsActive eq 1`)
+        .select('Id')
+        .top(500)();
+
+      return result.length;
+    } catch (e) {
+      this.handleError(e, 'countSteps');
+    }
+  }
+
+  // Cập nhật ActualSLA và CompletedSLA sau khi bước hoàn thành
+  async updateStepSLA(
+    stepId: number,
+    actualSLA: number,
+    completed: boolean
+  ): Promise<void> {
+    try {
+      await this.sp.web.lists
+        .getByTitle(LISTS.PROCESS_STEPS)
+        .items
+        .getById(stepId)
+        .update({
+          ActualSLA: actualSLA,
+          CompletedSLA: completed,
+        });
+    } catch (e) {
+      this.handleError(e, 'updateStepSLA');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // FIELD CONFIG
+  // ═══════════════════════════════════════════════════════
+
+  // Lấy toàn bộ field config cho một quy trình
+  // Bao gồm config chung (StepId = null) và config riêng cho từng bước
+  async getFieldConfigs(processId: number): Promise<IFieldConfig[]> {
+    
+    try {
+      const items = await this.sp.web.lists
+        .getByTitle(LISTS.FIELD_CONFIG)
+        .items
+        .select(...FIELD_CONFIG_SELECT)
+        .filter(`ProcessIDId eq ${processId}`)
+        .orderBy('Id', true)();
+        
+      return items.map(this._mapFieldConfig);
+    } catch (e) {
+      this.handleError(e, 'getFieldConfigs');
+    }
+  }
+
+  // Lấy field config cho một bước cụ thể
+  // Trả về: config có StepId khớp HOẶC StepId = null (áp dụng chung)
+  // Service sẽ merge 2 nhóm này lại với nhau
+  async getFieldConfigsByStep(
+    processId: number,
+    stepId: number
+  ): Promise<IFieldConfig[]> {
+    try {
+      // SharePoint không hỗ trợ "IS NULL" trong REST filter
+      // Nên phải query 2 lần rồi merge ở client
+      const [stepConfigs, generalConfigs] = await Promise.all([
+        // Config riêng cho bước này
+        this.sp.web.lists
+          .getByTitle(LISTS.FIELD_CONFIG)
+          .items
+          .select(...FIELD_CONFIG_SELECT)
+          .filter(`ProcessIDId eq ${processId} and StepIDId eq ${stepId}`)(),
+
+        // Config chung — StepId = 0 (quy ước: dùng 0 thay vì null cho REST filter dễ hơn)
+        // Hoặc lấy tất cả rồi filter ở client
+        this.sp.web.lists
+          .getByTitle(LISTS.FIELD_CONFIG)
+          .items
+          .select(...FIELD_CONFIG_SELECT)
+          .filter(`ProcessIDId eq ${processId}`)(),
+      ]);
+
+      // Filter: lấy config chung (không có StepId) + config riêng bước này
+      const general = generalConfigs.filter(
+        (i: Record<string, unknown>) => !i['StepIDId']
+      );
+      const forStep = stepConfigs;
+
+      // Merge: config bước cụ thể override config chung nếu cùng FieldInternalName
+      const merged = [...general];
+      for (const sc of forStep) {
+        const idx = merged.findIndex(
+          (g: Record<string, unknown>) =>
+            g['FieldInternalName'] === sc['FieldInternalName']
+        );
+        if (idx >= 0) {
+          merged[idx] = sc; // override
+        } else {
+          merged.push(sc);  // thêm mới
+        }
+      }
+
+      return merged.map(this._mapFieldConfig);
+    } catch (e) {
+      this.handleError(e, 'getFieldConfigsByStep');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // PRIVATE MAPPERS
+  // Chuyển raw SharePoint object → TypeScript interface sạch
+  // ═══════════════════════════════════════════════════════
+
+  private _mapProcess = (raw: Record<string, unknown>): IProcess => ({
+    Id:          raw['Id'] as number,
+    Title:       raw['Title'] as string,
+    ProcessCode: raw['ProcessCode'] as string,
+    Description: raw['Description'] as string | undefined,
+    IsActive:    raw['IsActive'] as boolean,
+  });
+
+  private _mapStep = (raw: Record<string, unknown>): IProcessStep => ({
+    Id:           raw['Id'] as number,
+    Title:        raw['Title'] as string,
+    ProcessIDId:  raw['ProcessIDId'] as number,
+    ProcessCode:  (raw['ProcessCode'] as string) || '', // Bổ sung để khớp với interface
+    StepOrder:    raw['StepOrder'] as number,
+    Approver:     this.mapPerson(raw, 'Approver'),
+    IsActive:     raw['IsActive'] as boolean,
+    SLA_Hours:    raw['SLA_Hours'] as number | undefined,
+    BeforeSLA:    raw['BeforeSLA'] as number | undefined,
+    ExpectedSLA:  raw['ExpectedSLA'] as number | undefined,
+    ActualSLA:    raw['ActualSLA'] as number | undefined,
+    CompletedSLA: raw['CompletedSLA'] as boolean | undefined,
+  });
+
+  private _mapFieldConfig = (raw: Record<string, unknown>): IFieldConfig => ({
+    Id:                raw['Id'] as number,
+    Title:             raw['Title'] as string,
+    ProcessIDId:       raw['ProcessIDId'] as number,
+    StepIDId:          raw['StepIDId'] as number | undefined,
+    ProcessCode:       raw['ProcessCode'] as string | undefined,
+    ComponentType:     raw['ComponentType'] as string | undefined,
+    FieldInternalName: raw['FieldInternalName'] as string,
+    FieldDisplayName:  raw['FieldDisplayName'] as string,
+    FieldType:         raw['FieldType'] as FieldType,
+    IsRequired:        raw['IsRequired'] as boolean,
+    IsVisible:         raw['IsVisible'] as boolean,
+    IsEditable:        raw['IsEditable'] as boolean,             
+    FieldOptions:      (raw['FieldOptions'] as string) || '' 
+  });
+}

@@ -1,0 +1,37 @@
+.layout {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+
+  background-color: #f5f7fa;
+}
+
+.sidebarWrapper {
+  width: 260px;
+  min-width: 260px;
+
+  flex-shrink: 0;
+
+  background-color: #ffffff;
+
+  border-right: 1px solid #edebe9;
+
+  overflow-y: auto;
+
+  transition: width 0.2s ease, min-width 0.2s ease;
+}
+
+.sidebarCollapsed {
+  width: 72px;
+  min-width: 72px;
+}
+
+.contentWrapper {
+  flex: 1;
+
+  min-width: 0;
+
+  padding: 24px;
+
+  overflow-x: auto;
+}

@@ -10,8 +10,9 @@ export interface ILeaveOfAbsence {
   AuthorId?: number;
   Author?: IPerson;        
   AbsenceType: string;
-  RequestedTime: string;
-  AbsenceDates: string;    
+  PartialDay: string;
+  AbsenceDates: string;  
+  RequestReason?: string;  
   TotalDays: number;
   ManagerId?: number;
   Manager?: IPerson;

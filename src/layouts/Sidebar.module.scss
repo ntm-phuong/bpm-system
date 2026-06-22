@@ -1,0 +1,204 @@
+.sidebar {
+  width: 260px;
+  min-width: 260px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+  border-right: 1px solid #edebe9;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  transition: width 0.2s ease, min-width 0.2s ease;
+}
+
+.logoSection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 12px;
+  border-bottom: 1px solid #f3f2f1;
+  background: #ffffff;
+}
+
+.bpmLogo {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.logoWrapper {
+  display: flex;
+  align-items: center;
+  min-width: 40px;
+  overflow: hidden;
+}
+
+.logoImage {
+  display: block;
+  height: 34px;
+  width: auto;
+  max-width: 160px;
+  object-fit: contain;
+
+  transition: max-width 0.2s ease, height 0.2s ease;
+}
+
+.menuButton {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #605e5c;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.menuButton:hover {
+  background: #f3f2f1;
+  color: #323130;
+}
+
+.navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 8px 16px;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.groupButton,
+.primaryItem,
+.childItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  color: #323130;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.groupButton:hover,
+.primaryItem:hover,
+.childItem:hover {
+  background: #f3f2f1;
+  color: #0b6fe8;
+}
+
+.primaryItem,
+.groupButton {
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 4px;
+}
+
+.groupHeading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.groupTitle,
+.itemLabel {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+
+.groupTitle {
+  color: #8a8886;
+  text-transform: uppercase;
+}
+
+.groupItems {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 22px;
+}
+
+.groupEmpty {
+  display: block;
+  padding: 7px 10px;
+  color: #8a8886;
+  font-size: 12px;
+}
+
+.childItem {
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 4px;
+  color: #323130;
+}
+
+.itemLeading {
+  width: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.selectedItem {
+  color: #0b6fe8;
+  background: #f5f9ff;
+  border-left: 3px solid #0b6fe8;
+}
+
+.toggleIcon {
+  flex-shrink: 0;
+}
+
+.collapsed {
+  width: 72px;
+  min-width: 72px;
+}
+
+.collapsed .logoSection {
+  justify-content: center;
+  padding: 12px 8px;
+}
+
+.collapsed .logoImage {
+  height: 28px;
+  max-width: 28px;
+}
+
+.collapsed .navigation {
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+.collapsed .groupHeading,
+.collapsed .primaryItem,
+.collapsed .groupButton {
+  justify-content: center;
+}
+
+.collapsed .itemLabel,
+.collapsed .groupTitle,
+.collapsed .toggleIcon {
+  display: none;
+}
+
+.collapsed .groupItems {
+  display: none;
+}
+
+.collapsed .selectedItem {
+  border-left-width: 2px;
+}
