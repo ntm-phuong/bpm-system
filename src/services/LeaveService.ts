@@ -16,7 +16,6 @@ const parseStepHistory = (historyStr?: string): IStepHistory[] => {
   }
 };
 
-// ─── Input & Output types nội bộ ─────────────────────────
 
 export interface ApproveStepInput {
   leaveId: number;
@@ -42,7 +41,7 @@ export interface IApproveResult {
   nextApproverName?: string;
 }
 
-// ─── Service ───────────────────────────────────────────────
+
 
 export class LeaveService {
   private _leaveRepo: LeaveRepository;
@@ -53,9 +52,6 @@ export class LeaveService {
     this._processService = new ProcessService();
   }
 
-  // ═══════════════════════════════════════════════════════
-  // SUBMIT — User nhấn submit trên form
-  // ═══════════════════════════════════════════════════════
   async submitLeave(
     input: ICreateLeaveInput, // Đã đổi sang ICreateLeaveInput của LeaveRepo
     processCode: string,
@@ -106,9 +102,7 @@ export class LeaveService {
     }
   }
 
-  // ═══════════════════════════════════════════════════════
-  // APPROVE — Người phê duyệt nhấn Duyệt
-  // ═══════════════════════════════════════════════════════
+
   async approveStep(input: ApproveStepInput): Promise<IApproveResult> {
     try {
       const leave = await this._leaveRepo.getLeaveById(input.leaveId);
