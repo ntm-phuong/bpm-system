@@ -14,8 +14,12 @@ const PROCESS_SELECT = [
 
 const STEP_SELECT = [
   'Id', 'Title', 'ProcessIDId', 'StepOrder',
+  'Approver/Id', 'Approver/Title', 'Approver/EMail',
+  'SLA_Hours', 'BeforeSLA',
   'IsActive',
 ] as const;
+
+const STEP_EXPAND = ['Approver'] as const;
 
 const FIELD_CONFIG_SELECT = [
   'Id', 'Title', 'ProcessIDId', 'StepIDId',
@@ -92,6 +96,7 @@ export class ProcessRepository extends BaseRepository {
         .getByTitle(LISTS.PROCESS_STEPS)
         .items
         .select(...STEP_SELECT)
+        .expand(...STEP_EXPAND)
         .filter(`ProcessIDId eq ${processId} and IsActive eq 1`)
         .orderBy('StepOrder', true)();
 
@@ -108,7 +113,8 @@ export class ProcessRepository extends BaseRepository {
         .getByTitle(LISTS.PROCESS_STEPS)
         .items
         .getById(stepId)
-        .select(...STEP_SELECT)();
+        .select(...STEP_SELECT)
+        .expand(...STEP_EXPAND)();
 
       return item ? this._mapStep(item) : null;
     } catch (e) {
@@ -127,6 +133,7 @@ export class ProcessRepository extends BaseRepository {
         .getByTitle(LISTS.PROCESS_STEPS)
         .items
         .select(...STEP_SELECT)
+        .expand(...STEP_EXPAND)
         .filter(
           `ProcessIDId eq ${processId} and StepOrder eq ${stepOrder} and IsActive eq 1`
         )

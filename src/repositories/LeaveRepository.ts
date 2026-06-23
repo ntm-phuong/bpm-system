@@ -2,17 +2,22 @@ import { BaseRepository } from "./BaseRepository";
 import { ILeaveOfAbsence, IRequest } from "../models"; // (Đã bỏ IComment)
 import { LISTS } from "../constants/lists";
 import { RequestStatus, StepStatus } from "../constants/enums";
+import { IWorkflowStep } from "../components/WorkflowStatus";
 
 // ─── Input types nội bộ ────────────────────────────────────
 
 export interface ICreateLeaveInput {
+  Title: string;
   ProcessIDId: number;
   AbsenceType: string;
+  PartialDay: string;
   AbsenceDates: string;
+  RequestReason?: string;
   TotalDays: number;
   ManagerId?: number;
   NotifyToId?: number;
   LateEarlyHours?: number;
+  HistoryStep?: IWorkflowStep[];
 }
 
 export interface ICreateRequestInput {
@@ -50,10 +55,11 @@ const LEAVE_SELECT = [
   "Title",
   "ProcessIDId",
   "AbsenceType",
-  "RequestedTime",
+  "PartialDay",
   "AbsenceDates",
   "TotalDays",
   "LateEarlyHours",
+  "RequestReason",
   "IndexOfStep",
   "StatusStep",
   "StatusRequest",
@@ -104,10 +110,11 @@ export class LeaveRepository extends BaseRepository {
     const result = await this.sp.web.lists
       .getByTitle(LISTS.LEAVE_OF_ABSENCE) // Sửa lại đúng tên hằng số list của bạn
       .items.add({
-        Title: this.generateTitle("LEAVE"),
+        Title: input.Title,
         ProcessIDId: input.ProcessIDId,
         AbsenceType: input.AbsenceType,
-        RequestedTime: this.now(),
+        PartialDay: input.PartialDay,
+        RequestReason: input.RequestReason,
         AbsenceDates: input.AbsenceDates,
         TotalDays: input.TotalDays,
         LateEarlyHours: input.LateEarlyHours,
@@ -116,7 +123,7 @@ export class LeaveRepository extends BaseRepository {
         StatusRequest: RequestStatus.Draft, // Đổi sang RequestStatus
         StatusStep: StepStatus.Pending,
         IndexOfStep: 0,
-        HistoryStep: JSON.stringify([]),
+        HistoryStep: JSON.stringify(input.HistoryStep || []),
       });
 
     return this.getLeaveById(result.data.Id);

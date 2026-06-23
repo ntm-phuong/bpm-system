@@ -1,23 +1,34 @@
 import * as React from 'react';
 import styles from './WorkflowStatus.module.scss';
+import { RequestStatus } from '../constants/enums';
 
 // Định nghĩa màu sắc cho các trạng thái
 const STATUS_COLORS = {
-  completed: '#27AE60', // Hoàn thành (Xanh lá)
-  processing: '#F2A93B', // Đang xử lý (Vàng cam)
-  forwarded: '#4A55A2', // Chuyển bước (Xanh đậm)
-  rejected: '#EB5757',  // Từ chối (Đỏ)
-  saved: '#56CCF2',     // Lưu (Xanh nhạt)
-  pending: '#7C8196',   // Chưa đến (Xám)
+  Approved: '#27AE60', // Hoàn thành (Xanh lá)
+  Processing: '#F2A93B', // Đang xử lý (Vàng cam)
+  Forwarded: '#4A55A2', // Chuyển bước (Xanh đậm)
+  Rejected: '#EB5757',  // Từ chối (Đỏ)
+  Draft: '#56CCF2',     // Lưu (Xanh nhạt)
+  Pending: '#7C8196',   // Chưa đến (Xám)
 };
 
 export interface IWorkflowStep {
   id: number;
   title: string;
-  assignee?: string;
-  status: keyof typeof STATUS_COLORS;
-}
 
+  assigneeId?: number;
+  assignee?: string;
+
+  status: RequestStatus;
+
+  assignedAt?: string;
+  completedAt?: string;
+
+  // comments?: string;
+
+  slaHours?: number;
+  beforeSLA?: number;
+}
 interface IWorkflowStatusProps {
   steps: IWorkflowStep[];
 }
@@ -27,12 +38,12 @@ export const WorkflowStatus: React.FC<IWorkflowStatusProps> = ({ steps }) => {
     <div className={styles.container}>
       {/* 1. Phần chú thích màu sắc (Legend) */}
       <div className={styles.legendContainer}>
-        <div className={styles.legendItem}><span className={styles.dot} style={{ backgroundColor: STATUS_COLORS.completed }}></span> Hoàn thành</div>
-        <div className={styles.legendItem}><span className={styles.dot} style={{ backgroundColor: STATUS_COLORS.processing }}></span> Đang xử lý</div>
-        <div className={styles.legendItem}><span className={styles.dot} style={{ backgroundColor: STATUS_COLORS.forwarded }}></span> Chuyển bước</div>
-        <div className={styles.legendItem}><span className={styles.dot} style={{ backgroundColor: STATUS_COLORS.rejected }}></span> Từ chối</div>
-        <div className={styles.legendItem}><span className={styles.dot} style={{ backgroundColor: STATUS_COLORS.saved }}></span> Lưu</div>
-        <div className={styles.legendItem}><span className={styles.dot} style={{ backgroundColor: STATUS_COLORS.pending }}></span> Chưa đến</div>
+        <div className={styles.legendItem}><span className={styles.dot} style={{ backgroundColor: STATUS_COLORS.Approved }}></span> Hoàn thành</div>
+        <div className={styles.legendItem}><span className={styles.dot} style={{ backgroundColor: STATUS_COLORS.Processing }}></span> Đang xử lý</div>
+        <div className={styles.legendItem}><span className={styles.dot} style={{ backgroundColor: STATUS_COLORS.Forwarded }}></span> Chuyển bước</div>
+        <div className={styles.legendItem}><span className={styles.dot} style={{ backgroundColor: STATUS_COLORS.Rejected }}></span> Từ chối</div>
+        <div className={styles.legendItem}><span className={styles.dot} style={{ backgroundColor: STATUS_COLORS.Draft }}></span> Lưu</div>
+        <div className={styles.legendItem}><span className={styles.dot} style={{ backgroundColor: STATUS_COLORS.Pending }}></span> Chưa đến</div>
       </div>
 
       <h3 className={styles.title}>Luồng trạng thái</h3>

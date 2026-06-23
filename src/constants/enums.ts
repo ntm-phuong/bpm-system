@@ -3,8 +3,12 @@ export enum RequestStatus {
   Pending = "Pending", // Đang xử lý
   Approved = "Approved", // Hoàn thành
   Rejected = "Rejected", // Từ chối
-  Revision = "Revision", // Yêu cầu chỉnh sửa (MỚI THÊM)
+  // Revision = "Revision", // Yêu cầu chỉnh sửa (MỚI THÊM)
+  Forwarded = "Forwarded", // Chuyển bước
+  Processing = "Processing", // Đang xử lý (Đang diễn ra)
 }
+
+
 
 export enum StepStatus {
   Pending = "Pending", // Đang xử lý
