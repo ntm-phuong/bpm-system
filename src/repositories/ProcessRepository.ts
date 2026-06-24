@@ -4,9 +4,7 @@ import { IProcess, IProcessStep, IFieldConfig } from '../models';
 import { LISTS } from '../constants/lists';
 import { FieldType } from '../constants/enums';
 
-// ─── Select / Expand constants ─────────────────────────────
-// Định nghĩa một lần, dùng lại trong mọi query
-// Giúp tránh quên field khi viết nhiều methods
+
 
 const PROCESS_SELECT = [
   'Id', 'Title', 'ProcessCode', 'Description', 'IsActive',
@@ -28,15 +26,10 @@ const FIELD_CONFIG_SELECT = [
   'FieldType', 'FieldOptions', 'IsRequired', 'IsVisible', 'IsEditable',
 ] as const;
 
-// ─── Repository ────────────────────────────────────────────
 
 export class ProcessRepository extends BaseRepository {
 
-  // ═══════════════════════════════════════════════════════
-  // PROCESSES
-  // ═══════════════════════════════════════════════════════
-
-  // Lấy tất cả quy trình đang active, sắp xếp theo tên
+  
   async getAllActive(): Promise<IProcess[]> {
     try {
       const items = await this.sp.web.lists
@@ -52,8 +45,7 @@ export class ProcessRepository extends BaseRepository {
     }
   }
 
-  // Lấy một quy trình theo ProcessCode
-  // Dùng nhiều nhất — ProcessCode là key tìm kiếm chính trong toàn hệ thống
+  
   async getByCode(code: string): Promise<IProcess | null> {
     try {
       const items = await this.sp.web.lists
@@ -84,12 +76,7 @@ export class ProcessRepository extends BaseRepository {
     }
   }
 
-  // ═══════════════════════════════════════════════════════
-  // PROCESS STEPS
-  // ═══════════════════════════════════════════════════════
-
-  // Lấy tất cả bước active của một quy trình, sắp xếp theo StepOrder
-  // Đây là query dùng nhiều nhất khi khởi tạo form và flow phê duyệt
+  
   async getStepsByProcessId(processId: number): Promise<IProcessStep[]> {
     try {
       const items = await this.sp.web.lists
@@ -122,8 +109,7 @@ export class ProcessRepository extends BaseRepository {
     }
   }
 
-  // Lấy bước theo thứ tự (StepOrder) trong một quy trình
-  // Dùng khi cần biết "bước số 2 của quy trình này là gì"
+  
   async getStepByOrder(
     processId: number,
     stepOrder: number
@@ -145,8 +131,7 @@ export class ProcessRepository extends BaseRepository {
     }
   }
 
-  // Lấy tổng số bước active của một quy trình
-  // Dùng để xác định isLastStep trong LeaveService
+  
   async countSteps(processId: number): Promise<number> {
     try {
       const result = await this.sp.web.lists
@@ -182,12 +167,7 @@ export class ProcessRepository extends BaseRepository {
     }
   }
 
-  // ═══════════════════════════════════════════════════════
-  // FIELD CONFIG
-  // ═══════════════════════════════════════════════════════
-
-  // Lấy toàn bộ field config cho một quy trình
-  // Bao gồm config chung (StepId = null) và config riêng cho từng bước
+  
   async getFieldConfigs(processId: number): Promise<IFieldConfig[]> {
     
     try {
@@ -204,9 +184,7 @@ export class ProcessRepository extends BaseRepository {
     }
   }
 
-  // Lấy field config cho một bước cụ thể
-  // Trả về: config có StepId khớp HOẶC StepId = null (áp dụng chung)
-  // Service sẽ merge 2 nhóm này lại với nhau
+  
   async getFieldConfigsByStep(
     processId: number,
     stepId: number
@@ -257,10 +235,7 @@ export class ProcessRepository extends BaseRepository {
     }
   }
 
-  // ═══════════════════════════════════════════════════════
-  // PRIVATE MAPPERS
-  // Chuyển raw SharePoint object → TypeScript interface sạch
-  // ═══════════════════════════════════════════════════════
+  
 
   private _mapProcess = (raw: Record<string, unknown>): IProcess => ({
     Id:          raw['Id'] as number,

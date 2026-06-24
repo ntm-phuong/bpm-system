@@ -53,54 +53,85 @@ export class LeaveService {
   }
 
   async submitLeave(
-    input: ICreateLeaveInput, // Đã đổi sang ICreateLeaveInput của LeaveRepo
-    processCode: string,
-  ): Promise<ISubmitLeaveResult> {
-    try {
-      // Bước 1: Tạo đơn ở trạng thái Draft
-      const leave = await this._leaveRepo.createLeave(input);
+  input: ICreateLeaveInput,
+  processCode: string,
+): Promise<ISubmitLeaveResult> {
 
-      // Bước 2: Lấy thông tin bước 1 để biết approver
-      const firstStep = await this._processService.getFirstStepApprover(
-        input.ProcessIDId, // Đồng bộ tên trường ProcessIDId
+  try {
+
+    console.log("A");
+    const leave = await this._leaveRepo.createLeave(input);
+    console.log("leave =", leave);
+
+    console.log("B");
+    const firstStep =
+      await this._processService.getFirstStepApprover(
+        input.ProcessIDId,
       );
+    console.log("firstStep =", firstStep);
 
-      // Ưu tiên Approver cấu hình cứng, nếu không có lấy Manager của nhân viên
-      const approverId = firstStep.Approver?.Id || input.ManagerId;
-      if (!approverId) {
-        throw new Error(`Không xác định được người phê duyệt cho bước 1`);
-      }
+    console.log("C");
+    const approverId =
+  firstStep.Approver?.Id ?? input.ManagerId;
+  console.log(
+  JSON.stringify(firstStep, null, 2)
+);
 
-      // Bước 3: Cập nhật LeaveOfAbsence → Pending (Đang xử lý)
-      await this._leaveRepo.updateLeaveFlow({
-        id: leave.Id,
-        statusRequest: RequestStatus.Pending, // Đổi InProgress -> Pending
-        statusStep: StepStatus.Pending,
-        indexOfStep: firstStep.StepOrder,
-        approvedById: approverId,
-        historyStep: [],
-      });
+if (approverId == null) {
+  throw new Error(
+    `Step ${firstStep.StepOrder} chưa được cấu hình Approver và đơn cũng không có ManagerId`
+  );
+}
+    console.log("approverId =", approverId);
 
-      // Bước 4: Tạo Request cho bước 1
-      const request = await this._leaveRepo.createRequest({
-        absenceIDId: leave.Id, // Đồng bộ AbsenceIDId
-        processCode: processCode,
-        approverId: approverId,
+    console.log("D");
+    await this._leaveRepo.updateLeaveFlow({
+      id: leave.Id,
+      statusRequest: RequestStatus.Pending,
+      statusStep: StepStatus.Pending,
+      indexOfStep: firstStep.StepOrder,
+      approvedById: approverId,
+      historyStep: [],
+    });
+
+    console.log("E");
+    const request =
+      await this._leaveRepo.createRequest({
+        absenceIDId: leave.Id,
+        // processCode,
+        approverId,
         currentStep: firstStep.StepOrder,
         department: leave.Author?.Title,
       });
 
-      const updatedLeave = await this._leaveRepo.getLeaveById(leave.Id);
+    console.log("request =", request);
 
-      return {
-        leave: updatedLeave,
-        request: request,
-        nextApproverName: firstStep.Approver?.Title || "Người quản lý",
-      };
-    } catch (e) {
-      throw this._wrapError(e, "submitLeave");
+    console.log("F");
+    const updatedLeave =
+      await this._leaveRepo.getLeaveById(leave.Id);
+
+    console.log("updatedLeave =", updatedLeave);
+
+    console.log("G");
+
+    return {
+      leave: updatedLeave,
+      request,
+      nextApproverName:
+        firstStep.Approver?.Title || "Người quản lý",
+    };
+
+  } catch (e) {
+
+    console.error("FULL ERROR =", e);
+
+    if (e instanceof Error) {
+      console.error("STACK =", e.stack);
     }
+
+    throw e;
   }
+}
 
 
   async approveStep(input: ApproveStepInput): Promise<IApproveResult> {
@@ -166,13 +197,13 @@ export class LeaveService {
           input.requestId,
           RequestStatus.Approved,
         );
-        const currentRequest = await this._leaveRepo.getRequestById(
-          input.requestId,
-        );
+        // const currentRequest = await this._leaveRepo.getRequestById(
+        //   input.requestId,
+        // );
 
         await this._leaveRepo.createRequest({
           absenceIDId: input.leaveId,
-          processCode: currentRequest.ProcessCode ?? "",
+          // processCode: currentRequest.ProcessCode ?? "",
           approverId: nextApprover.Id,
           currentStep: stepInfo.nextStep.StepOrder,
         });
