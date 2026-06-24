@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { Icon } from '@fluentui/react';
-import { FieldType } from '../constants/enums';
-import { IFieldConfig } from '../models';
-import { IFormConfig } from '../services/ProcessService';
-import styles from './RequestForm.module.scss';
+import { FieldType } from '../../constants/enums';
+import { IFieldConfig } from '../../models';
+import { IFormConfig } from '../../services/ProcessService';
+import styles from '../RequestForm.module.scss';
 
 export interface IRequestFormProps {
   formConfig: IFormConfig;

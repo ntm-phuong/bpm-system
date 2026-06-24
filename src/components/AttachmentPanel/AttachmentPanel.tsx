@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useRef, useState } from 'react';
 import { PrimaryButton, Icon, IconButton } from '@fluentui/react';
-import styles from './AttachmentPanel.module.scss';
+import styles from '../AttachmentPanel.module.scss';
 
 export interface IAttachmentPanelProps {
   files: File[];

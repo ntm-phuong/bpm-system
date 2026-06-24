@@ -1,6 +1,6 @@
 import * as React from 'react';
-import styles from './WorkflowStatus.module.scss';
-import { RequestStatus } from '../constants/enums';
+import styles from '../WorkflowStatus.module.scss';
+import { RequestStatus } from '../../constants/enums';
 
 // Định nghĩa màu sắc cho các trạng thái
 const STATUS_COLORS = {

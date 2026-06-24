@@ -2,7 +2,7 @@ import { BaseRepository } from "./BaseRepository";
 import { ILeaveOfAbsence, IRequest } from "../models"; // (Đã bỏ IComment)
 import { LISTS } from "../constants/lists";
 import { RequestStatus, StepStatus } from "../constants/enums";
-import { IWorkflowStep } from "../components/WorkflowStatus";
+import { IWorkflowStep } from "../components/WorkflowStatus/WorkflowStatus";
 
 // ─── Input types nội bộ ────────────────────────────────────
 
@@ -22,7 +22,7 @@ export interface ICreateLeaveInput {
 
 export interface ICreateRequestInput {
   absenceIDId: number;
-  processCode: string;
+  // processCode: string;
   approverId: number;
   currentStep: number;
   department?: string;
@@ -82,22 +82,23 @@ const REQUEST_SELECT = [
   "Id",
   "Title",
   "AbsenceIDId",
-  "ProcessCode",
+  // "ProcessCode",
   "Status",
   "CurrentStep",
   "IsEmergency",
   "Department",
   "AbsenceID/Id",
   "AbsenceID/Title",
-  "ApprovedBy/Id",
-  "ApprovedBy/Title",
-  "ApprovedBy/EMail",
+  "CurrentApprover/Id",
+  "CurrentApprover/Title",
+  "CurrentApprover/EMail",
   "Author/Id",
   "Author/Title",
   "Author/EMail",
+  "HistoryApproval",
 ] as const;
 
-const REQUEST_EXPAND = ["ApprovedBy", "Author", "AbsenceID"] as const;
+const REQUEST_EXPAND = ["CurrentApprover", "Author", "AbsenceID"] as const;
 
 // ─── Repository ────────────────────────────────────────────
 
@@ -126,7 +127,10 @@ export class LeaveRepository extends BaseRepository {
         HistoryStep: JSON.stringify(input.HistoryStep || []),
       });
 
-    return this.getLeaveById(result.data.Id);
+    console.log("ADD RESULT =", result);
+    console.log("ADD RESULT DATA =", result.data);
+
+    return this.getLeaveById(result.Id);
   }
 
   async getLeaveById(id: number): Promise<ILeaveOfAbsence> {
@@ -239,15 +243,15 @@ export class LeaveRepository extends BaseRepository {
       .items.add({
         Title: this.generateTitle("REQ", input.absenceIDId),
         AbsenceIDId: input.absenceIDId, // Khớp cột AbsenceIDId
-        ProcessCode: input.processCode,
+        // ProcessCode: input.processCode,
         Status: RequestStatus.Pending,
-        ApprovedById: input.approverId,
+        CurrentApproverId: input.approverId,
         CurrentStep: input.currentStep,
         Department: input.department,
         IsEmergency: input.isEmergency ?? false,
       });
 
-    return this.getRequestById(result.data.Id);
+    return this.getRequestById(result.Id);
   }
 
   async getRequestById(id: number): Promise<IRequest> {
@@ -314,13 +318,14 @@ export class LeaveRepository extends BaseRepository {
       Title: raw.Title as string,
       AbsenceIDId: absenceIdValue as number,
       AbsenceTitle: raw.AbsenceID?.Title,
-      ProcessCode: raw.ProcessCode as string | undefined,
+      // ProcessCode: raw.ProcessCode as string | undefined,
       Status: raw.Status as RequestStatus,
-      ApprovedBy: this.mapPerson(raw, "ApprovedBy"),
+      CurrentApprover: this.mapPerson(raw, "CurrentApprover"),
       Author: this.mapPerson(raw, "Author"),
       CurrentStep: raw.CurrentStep as number | undefined,
       IsEmergency: raw.IsEmergency as boolean | undefined,
       Department: raw.Department as string | undefined,
+      HistoryApproval: (raw.HistoryApproval as string) ?? "[]",
     };
   };
 }

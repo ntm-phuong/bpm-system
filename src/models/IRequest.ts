@@ -6,13 +6,14 @@ export interface IRequest {
   Title: string;
   AbsenceIDId: number;
   AbsenceTitle?: string;
-  ProcessCode?: string;
+  // ProcessCode?: string;
   Status: RequestStatus;
-  ApprovedById?: number;
-  ApprovedBy?: IPerson;
+  CurrentApproverId?: number;
+  CurrentApprover?: IPerson;
   AuthorId?: number;
   Author?: IPerson;
   CurrentStep?: number;
   IsEmergency?: boolean;
   Department?: string;
+  HistoryApproval?: string;
 }
