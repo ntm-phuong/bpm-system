@@ -5,4 +5,5 @@ export * from './IProcessStep';
 export * from './IFieldConfig';
 export * from './ILeaveOfAbsence';
 export * from './IRequest';
-export * from './IStepHistory';
+export * from './IHistoryApproval';
+export * from './IWorkflowStep';

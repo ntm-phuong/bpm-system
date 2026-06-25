@@ -8,8 +8,8 @@ export interface IRequest {
   AbsenceTitle?: string;
   // ProcessCode?: string;
   Status: RequestStatus;
-  CurrentApproverId?: number;
-  CurrentApprover?: IPerson;
+  ApproverId?: number;
+  Approver?: IPerson;
   AuthorId?: number;
   Author?: IPerson;
   CurrentStep?: number;

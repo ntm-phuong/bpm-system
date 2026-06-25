@@ -1,10 +1,7 @@
 import { BaseRepository } from "./BaseRepository";
-import { ILeaveOfAbsence, IRequest } from "../models"; // (Đã bỏ IComment)
+import { ILeaveOfAbsence,  IWorkflowStep, parseHistorySteps} from "../models"; // (Đã bỏ IComment)
 import { LISTS } from "../constants/lists";
 import { RequestStatus, StepStatus } from "../constants/enums";
-import { IWorkflowStep } from "../components/WorkflowStatus/WorkflowStatus";
-
-// ─── Input types nội bộ ────────────────────────────────────
 
 export interface ICreateLeaveInput {
   Title: string;
@@ -19,25 +16,14 @@ export interface ICreateLeaveInput {
   LateEarlyHours?: number;
   HistoryStep?: IWorkflowStep[];
 }
-
-export interface ICreateRequestInput {
-  absenceIDId: number;
-  // processCode: string;
-  approverId: number;
-  currentStep: number;
-  department?: string;
-  isEmergency?: boolean;
-}
-
 export interface IUpdateLeaveFlowInput {
   id: number;
   statusRequest?: RequestStatus; // Đồng bộ dùng RequestStatus
   statusStep?: StepStatus;
   indexOfStep?: number;
   approvedById?: number;
-  historyStep?: any[];
+  historyStep?: IWorkflowStep[];
 }
-
 export interface ILeaveFilterInput {
   authorId?: number;
   approverId?: number;
@@ -47,8 +33,6 @@ export interface ILeaveFilterInput {
   top?: number;
   skip?: number;
 }
-
-// ─── Select / Expand constants ─────────────────────────────
 
 const LEAVE_SELECT = [
   "Id",
@@ -78,35 +62,7 @@ const LEAVE_SELECT = [
 
 const LEAVE_EXPAND = ["ApprovedBy", "Author", "Manager", "NotifyTo"] as const;
 
-const REQUEST_SELECT = [
-  "Id",
-  "Title",
-  "AbsenceIDId",
-  // "ProcessCode",
-  "Status",
-  "CurrentStep",
-  "IsEmergency",
-  "Department",
-  "AbsenceID/Id",
-  "AbsenceID/Title",
-  "CurrentApprover/Id",
-  "CurrentApprover/Title",
-  "CurrentApprover/EMail",
-  "Author/Id",
-  "Author/Title",
-  "Author/EMail",
-  "HistoryApproval",
-] as const;
-
-const REQUEST_EXPAND = ["CurrentApprover", "Author", "AbsenceID"] as const;
-
-// ─── Repository ────────────────────────────────────────────
-
 export class LeaveRepository extends BaseRepository {
-  // ═══════════════════════════════════════════════════════
-  // LEAVE OF ABSENCE
-  // ═══════════════════════════════════════════════════════
-
   async createLeave(input: ICreateLeaveInput): Promise<ILeaveOfAbsence> {
     const result = await this.sp.web.lists
       .getByTitle(LISTS.LEAVE_OF_ABSENCE) // Sửa lại đúng tên hằng số list của bạn
@@ -233,62 +189,7 @@ export class LeaveRepository extends BaseRepository {
       .delete();
   }
 
-  // ═══════════════════════════════════════════════════════
-  // REQUESTS (Hộp thư công việc)
-  // ═══════════════════════════════════════════════════════
 
-  async createRequest(input: ICreateRequestInput): Promise<IRequest> {
-    const result = await this.sp.web.lists
-      .getByTitle(LISTS.REQUESTS)
-      .items.add({
-        Title: this.generateTitle("REQ", input.absenceIDId),
-        AbsenceIDId: input.absenceIDId, // Khớp cột AbsenceIDId
-        // ProcessCode: input.processCode,
-        Status: RequestStatus.Pending,
-        CurrentApproverId: input.approverId,
-        CurrentStep: input.currentStep,
-        Department: input.department,
-        IsEmergency: input.isEmergency ?? false,
-      });
-
-    return this.getRequestById(result.Id);
-  }
-
-  async getRequestById(id: number): Promise<IRequest> {
-    const item = await this.sp.web.lists
-      .getByTitle(LISTS.REQUESTS)
-      .items.getById(id)
-      .select(...REQUEST_SELECT)
-      .expand(...REQUEST_EXPAND)();
-
-    return this._mapRequest(item);
-  }
-
-  async getActiveRequestByLeave(
-    absenceIDId: number,
-  ): Promise<IRequest | undefined> {
-    const items = await this.sp.web.lists
-      .getByTitle(LISTS.REQUESTS)
-      .items.select(...REQUEST_SELECT)
-      .expand(...REQUEST_EXPAND)
-      .filter(
-        `AbsenceIDId eq ${absenceIDId} and Status eq '${RequestStatus.Pending}'`,
-      )
-      .top(1)();
-
-    return items.length > 0 ? this._mapRequest(items[0]) : undefined;
-  }
-
-  async closeRequest(id: number, status: RequestStatus): Promise<void> {
-    await this.sp.web.lists
-      .getByTitle(LISTS.REQUESTS)
-      .items.getById(id)
-      .update({ Status: status });
-  }
-
-  // ═══════════════════════════════════════════════════════
-  // PRIVATE MAPPERS (Đã xử lý sạch linter)
-  // ═══════════════════════════════════════════════════════
 
   private _mapLeave = (raw: any): ILeaveOfAbsence => ({
     Id: raw.Id as number,
@@ -306,26 +207,8 @@ export class LeaveRepository extends BaseRepository {
     IndexOfStep: raw.IndexOfStep as number | undefined,
     StatusStep: raw.StatusStep as StepStatus | undefined,
     StatusRequest: raw.StatusRequest as RequestStatus | undefined,
-    HistoryStep: (raw.HistoryStep as string) ?? "[]",
+    HistoryStep: parseHistorySteps((raw.HistoryStep as string) ?? "[]"),
   });
 
-  private _mapRequest = (raw: any): IRequest => {
-    // Xử lý an toàn cho cột Lookup AbsenceID
-    const absenceIdValue = raw.AbsenceID?.Id ?? raw.AbsenceIDId;
-
-    return {
-      Id: raw.Id as number,
-      Title: raw.Title as string,
-      AbsenceIDId: absenceIdValue as number,
-      AbsenceTitle: raw.AbsenceID?.Title,
-      // ProcessCode: raw.ProcessCode as string | undefined,
-      Status: raw.Status as RequestStatus,
-      CurrentApprover: this.mapPerson(raw, "CurrentApprover"),
-      Author: this.mapPerson(raw, "Author"),
-      CurrentStep: raw.CurrentStep as number | undefined,
-      IsEmergency: raw.IsEmergency as boolean | undefined,
-      Department: raw.Department as string | undefined,
-      HistoryApproval: (raw.HistoryApproval as string) ?? "[]",
-    };
-  };
+  
 }

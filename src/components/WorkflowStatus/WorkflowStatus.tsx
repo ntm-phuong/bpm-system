@@ -1,6 +1,6 @@
 import * as React from 'react';
 import styles from '../WorkflowStatus.module.scss';
-import { RequestStatus } from '../../constants/enums';
+import { IWorkflowStep } from '../../models';
 
 // Định nghĩa màu sắc cho các trạng thái
 const STATUS_COLORS = {
@@ -12,23 +12,7 @@ const STATUS_COLORS = {
   Pending: '#7C8196',   // Chưa đến (Xám)
 };
 
-export interface IWorkflowStep {
-  id: number;
-  title: string;
-
-  assigneeId?: number;
-  assignee?: string;
-
-  status: RequestStatus;
-
-  assignedAt?: string;
-  completedAt?: string;
-
-  // comments?: string;
-
-  slaHours?: number;
-  beforeSLA?: number;
-}
+export type { IWorkflowStep };
 interface IWorkflowStatusProps {
   steps: IWorkflowStep[];
 }
@@ -54,7 +38,7 @@ export const WorkflowStatus: React.FC<IWorkflowStatusProps> = ({ steps }) => {
           const stepColor = STATUS_COLORS[step.status];
 
           return (
-            <div key={step.id} className={styles.stepColumn}>
+            <div key={step.stepOrder} className={styles.stepColumn}>
               {/* Thẻ mũi tên (Truyền CSS Variable để đổi màu động) */}
               <div 
                 className={styles.stepArrow} 

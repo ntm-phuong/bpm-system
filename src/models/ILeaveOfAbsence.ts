@@ -1,5 +1,6 @@
 import { RequestStatus, StepStatus } from "../constants/enums";
 import { IPerson } from "./IPerson";
+import { IWorkflowStep } from "./IWorkflowStep";
 
 export interface ILeaveOfAbsence {
   Id: number;
@@ -22,5 +23,5 @@ export interface ILeaveOfAbsence {
   IndexOfStep?: number;
   StatusStep?: StepStatus;
   StatusRequest?: RequestStatus;
-  HistoryStep?: string;   
+  HistoryStep?: IWorkflowStep[];
 }
