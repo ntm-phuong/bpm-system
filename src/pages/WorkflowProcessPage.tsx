@@ -5,8 +5,9 @@ import { useProcessForm } from "../hooks/UseProcessForm";
 import { LeaveService } from "../services/LeaveService";
 import { ICreateLeaveInput } from "../repositories/LeaveRepository";
 import { RequestStatus } from "../constants/enums";
+import { IWorkflowStep } from "../models";
 
-import { WorkflowStatus, IWorkflowStep } from "../components/WorkflowStatus/WorkflowStatus";
+import { WorkflowStatus } from "../components/WorkflowStatus/WorkflowStatus";
 import { RequestForm } from "../components/RequestForm/RequestForm";
 import { AttachmentPanel } from "../components/AttachmentPanel/AttachmentPanel";
 import { BaseFields } from "../components/BaseFields/BaseFields";
@@ -117,7 +118,7 @@ export const WorkflowProcess: React.FC = () => {
 
     try {
       setIsLoading(true);
-      const submitResult = await leaveService.submitLeave(createInput, formConfig.process.ProcessCode);
+      const submitResult = await leaveService.submitLeave(createInput);
       alert(`Nộp đơn thành công! Chuyển tới: ${submitResult.nextApproverName}`);
       handleReset();
     } catch (error: any) {
@@ -139,7 +140,8 @@ export const WorkflowProcess: React.FC = () => {
     return [...(formConfig.steps || [])]
       .sort((a, b) => a.StepOrder - b.StepOrder)
       .map((step, index) => ({
-        id: step.Id,
+        id: step.StepOrder,
+        stepOrder: step.StepOrder,
         title: step.Title,
         assigneeId: step.Approver?.Id,
         assignee: step.Approver?.Title || "",
