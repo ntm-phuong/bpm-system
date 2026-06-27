@@ -1,176 +1,350 @@
 import { ProcessService } from "./ProcessService";
 import { LeaveRepository } from "../repositories/LeaveRepository";
 import { RequestRepository } from "../repositories/RequestRepository";
-import { ILeaveOfAbsence, IWorkflowStep } from "../models";
-import { StepStatus, RequestStatus } from "../constants/enums";
 import {
-  ApproveStepInput,
-  IApproveResult,
-  RejectLeaveInput,
-  RecallLeaveInput,
-} from "../types/LeaveServiceType";
+  ILeaveOfAbsence,
+  IWorkflowStep,
+  IHistoryApproval,
+  parseHistoryApproval,
+} from "../models";
+import { StepStatus, RequestStatus } from "../constants/enums";
+import { IApproveResult } from "../types/LeaveServiceType";
+
+interface IActionUser {
+  Id: number;
+  Title?: string;
+  EMail?: string;
+}
 
 export class LeaveApprovalService {
   private _leaveRepo = new LeaveRepository();
   private _requestRepo = new RequestRepository();
   private _processService = new ProcessService();
 
-  async approveStep(input: ApproveStepInput): Promise<IApproveResult> {
+  async approveStep(input: {
+    requestId: number;
+    currentUser: IActionUser;
+    comment?: string;
+  }): Promise<IApproveResult> {
     try {
-      const leave = await this._leaveRepo.getLeaveById(input.leaveId);
-      const currentHistory = leave.HistoryStep ?? [];
+      const now = new Date().toISOString();
 
-      const newHistoryRecord: IWorkflowStep = {
-        stepOrder: input.stepHistory.stepOrder,
-        title: input.stepHistory.title,
-        assigneeId: input.stepHistory.assigneeId,
-        assignee: input.stepHistory.assignee,
-        status: RequestStatus.Approved,
-        assignedAt: input.stepHistory.assignedAt,
-        completedAt: new Date().toISOString(),
-        action: "Approved",
-        slaHours: input.stepHistory.slaHours,
-        beforeSLA: input.stepHistory.beforeSLA,
-      };
+      const request = await this._requestRepo.getRequestById(input.requestId);
 
-      const updatedHistory = [...currentHistory, newHistoryRecord];
+      this._validateProcessableRequest(request, input.currentUser.Id);
 
-      if (input.isLastStep) {
-        await this._leaveRepo.updateLeaveFlow({
-          id: input.leaveId,
-          statusRequest: RequestStatus.Approved,
-          statusStep: StepStatus.Approved,
-          historyStep: updatedHistory,
-          approvedById: undefined,
-        });
+      const leave = await this._leaveRepo.getLeaveById(request.AbsenceIDId);
 
-        await this._requestRepo.closeRequest(
-          input.requestId,
-          RequestStatus.Approved,
-        );
+      const currentStepOrder = request.CurrentStep;
 
-        const completedLeave = await this._leaveRepo.getLeaveById(input.leaveId);
-        return { isCompleted: true, leave: completedLeave };
+      if (!currentStepOrder) {
+        throw new Error("Request không có CurrentStep.");
       }
-
-      const currentStepOrder = input.stepHistory.stepOrder;
 
       const stepInfo = await this._processService.getStepInfo(
         leave.ProcessIDId,
-        currentStepOrder,
+        currentStepOrder
       );
 
-      if (!stepInfo.nextStep?.Approver) {
-        throw new Error(
-          `Bước ${currentStepOrder + 1} chưa được cấu hình người phê duyệt`,
-        );
+      const updatedHistoryStep = this._approveCurrentHistoryStep({
+        historyStep: leave.HistoryStep ?? [],
+        currentStepOrder,
+        nextStepOrder: stepInfo.nextStep?.StepOrder,
+        now,
+      });
+
+      const updatedHistoryApproval = this._appendHistoryApproval({
+        oldHistory: request.HistoryApproval,
+        requestId: request.Id,
+        stepOrder: currentStepOrder,
+        stepName: stepInfo.step.Title,
+        actor: input.currentUser,
+        action: "Approved",
+        now,
+        comment: input.comment,
+      });
+
+      if (stepInfo.isLastStep || !stepInfo.nextStep) {
+        await this._leaveRepo.updateLeaveFlow({
+          id: leave.Id,
+          statusRequest: RequestStatus.Approved,
+          statusStep: StepStatus.Approved,
+          indexOfStep: currentStepOrder,
+          approvedById: input.currentUser.Id,
+          historyStep: updatedHistoryStep,
+        });
+
+        await this._requestRepo.updateRequest({
+          id: request.Id,
+          status: RequestStatus.Approved,
+          currentApproverId: null,
+          currentStep: currentStepOrder,
+          historyApproval: updatedHistoryApproval,
+        });
+
+        const completedLeave = await this._leaveRepo.getLeaveById(leave.Id);
+
+        return {
+          isCompleted: true,
+          leave: completedLeave,
+        };
       }
 
-      const nextApprover = stepInfo.nextStep.Approver;
-
       await this._leaveRepo.updateLeaveFlow({
-        id: input.leaveId,
+        id: leave.Id,
+        statusRequest: RequestStatus.Pending,
         statusStep: StepStatus.Pending,
         indexOfStep: stepInfo.nextStep.StepOrder,
-        approvedById: nextApprover.Id,
-        historyStep: updatedHistory,
+        approvedById: input.currentUser.Id,
+        historyStep: updatedHistoryStep,
       });
 
-      await this._requestRepo.closeRequest(
-        input.requestId,
-        RequestStatus.Approved,
-      );
-
-      await this._requestRepo.createRequest({
-        absenceIDId: input.leaveId,
-        approverId: nextApprover.Id,
+      await this._requestRepo.updateRequest({
+        id: request.Id,
+        status: RequestStatus.Pending,
+        currentApproverId: stepInfo.nextStep.StepApproverId ?? null,
         currentStep: stepInfo.nextStep.StepOrder,
+        historyApproval: updatedHistoryApproval,
       });
 
-      const updatedLeave = await this._leaveRepo.getLeaveById(input.leaveId);
+      const updatedLeave = await this._leaveRepo.getLeaveById(leave.Id);
 
       return {
         isCompleted: false,
         leave: updatedLeave,
-        nextApproverName: nextApprover.Title,
+        nextApproverName:
+          stepInfo.nextStep.StepApprover?.Title ?? "Chưa có người phụ trách",
       };
     } catch (e) {
       throw this._wrapError(e, "approveStep");
     }
   }
 
-  async rejectLeave(params: RejectLeaveInput): Promise<ILeaveOfAbsence> {
+  async rejectLeave(input: {
+    requestId: number;
+    currentUser: IActionUser;
+    comment?: string;
+  }): Promise<ILeaveOfAbsence> {
     try {
-      const leave = await this._leaveRepo.getLeaveById(params.leaveId);
-      const currentHistory = leave.HistoryStep ?? [];
+      const now = new Date().toISOString();
 
-      const historyRecord: IWorkflowStep = {
-        stepOrder: params.stepOrder,
-        title: params.stepName,
-        assignee: params.approverEmail,
-        status: RequestStatus.Rejected,
-        assignedAt: leave.HistoryStep?.find(
-          (x) => x.stepOrder === params.stepOrder,
-        )?.assignedAt,
-        completedAt: new Date().toISOString(),
-        action: "Rejected",
-      };
+      const request = await this._requestRepo.getRequestById(input.requestId);
 
-      await this._leaveRepo.updateLeaveFlow({
-        id: params.leaveId,
-        statusRequest: RequestStatus.Rejected,
-        statusStep: StepStatus.Rejected,
-        historyStep: [...currentHistory, historyRecord],
-        approvedById: undefined,
-      });
+      this._validateProcessableRequest(request, input.currentUser.Id);
 
-      await this._requestRepo.closeRequest(
-        params.requestId,
-        RequestStatus.Rejected,
+      const leave = await this._leaveRepo.getLeaveById(request.AbsenceIDId);
+
+      const currentStepOrder = request.CurrentStep;
+
+      if (!currentStepOrder) {
+        throw new Error("Request không có CurrentStep.");
+      }
+
+      const stepInfo = await this._processService.getStepInfo(
+        leave.ProcessIDId,
+        currentStepOrder
       );
 
-      return this._leaveRepo.getLeaveById(params.leaveId);
+      const updatedHistoryStep = this._rejectCurrentHistoryStep({
+        historyStep: leave.HistoryStep ?? [],
+        currentStepOrder,
+        now,
+      });
+
+      const updatedHistoryApproval = this._appendHistoryApproval({
+        oldHistory: request.HistoryApproval,
+        requestId: request.Id,
+        stepOrder: currentStepOrder,
+        stepName: stepInfo.step.Title,
+        actor: input.currentUser,
+        action: "Rejected",
+        now,
+        comment: input.comment,
+      });
+
+      await this._leaveRepo.updateLeaveFlow({
+        id: leave.Id,
+        statusRequest: RequestStatus.Rejected,
+        statusStep: StepStatus.Rejected,
+        indexOfStep: currentStepOrder,
+        approvedById: input.currentUser.Id,
+        historyStep: updatedHistoryStep,
+      });
+
+      await this._requestRepo.updateRequest({
+        id: request.Id,
+        status: RequestStatus.Rejected,
+        currentApproverId: null,
+        currentStep: currentStepOrder,
+        historyApproval: updatedHistoryApproval,
+      });
+
+      return this._leaveRepo.getLeaveById(leave.Id);
     } catch (e) {
       throw this._wrapError(e, "rejectLeave");
     }
   }
 
-  async recallLeave(params: RecallLeaveInput): Promise<ILeaveOfAbsence> {
+  async recallLeave(input: {
+    requestId: number;
+    currentUser: IActionUser;
+    comment?: string;
+  }): Promise<ILeaveOfAbsence> {
     try {
-      const leave = await this._leaveRepo.getLeaveById(params.leaveId);
+      const now = new Date().toISOString();
+
+      const request = await this._requestRepo.getRequestById(input.requestId);
+      const leave = await this._leaveRepo.getLeaveById(request.AbsenceIDId);
 
       if (leave.StatusRequest !== RequestStatus.Pending) {
-        throw new Error(`Chỉ được thu hồi đơn đang ở trạng thái Đang xử lý`);
+        throw new Error("Chỉ được thu hồi đơn đang ở trạng thái Pending.");
       }
 
-      const currentHistory = leave.HistoryStep ?? [];
+      if (leave.RequesterId !== input.currentUser.Id) {
+        throw new Error("Bạn không phải người tạo đơn này.");
+      }
 
-      const historyRecord: IWorkflowStep = {
-        stepOrder: leave.IndexOfStep ?? 0,
-        title: "Thu hồi bởi người nộp đơn",
-        assignee: params.recallerEmail,
-        status: RequestStatus.Draft,
-        completedAt: new Date().toISOString(),
+      const updatedHistoryApproval = this._appendHistoryApproval({
+        oldHistory: request.HistoryApproval,
+        requestId: request.Id,
+        stepOrder: request.CurrentStep ?? 0,
+        stepName: "Recall Request",
+        actor: input.currentUser,
         action: "Recalled",
-      };
-
-      await this._leaveRepo.updateLeaveFlow({
-        id: params.leaveId,
-        statusRequest: RequestStatus.Draft,
-        statusStep: StepStatus.Rejected,
-        historyStep: [...currentHistory, historyRecord],
-        approvedById: undefined,
+        now,
+        comment: input.comment,
       });
 
-      await this._requestRepo.closeRequest(
-        params.requestId,
-        RequestStatus.Rejected,
-      );
+      await this._leaveRepo.updateLeaveFlow({
+        id: leave.Id,
+        statusRequest: RequestStatus.Draft,
+        statusStep: StepStatus.Waiting,
+        indexOfStep: request.CurrentStep,
+        historyStep: leave.HistoryStep ?? [],
+      });
 
-      return this._leaveRepo.getLeaveById(params.leaveId);
+      await this._requestRepo.updateRequest({
+        id: request.Id,
+        status: RequestStatus.Draft,
+        currentApproverId: null,
+        currentStep: request.CurrentStep,
+        historyApproval: updatedHistoryApproval,
+      });
+
+      return this._leaveRepo.getLeaveById(leave.Id);
     } catch (e) {
       throw this._wrapError(e, "recallLeave");
     }
+  }
+
+  private _validateProcessableRequest(
+    request: {
+      Status: RequestStatus;
+      CurrentApproverId?: number | null;
+    },
+    currentUserId: number
+  ): void {
+    if (request.Status !== RequestStatus.Pending) {
+      throw new Error("Chỉ có thể xử lý request đang Pending.");
+    }
+
+    if (!request.CurrentApproverId) {
+      throw new Error("Request hiện tại chưa có người phụ trách.");
+    }
+
+    if (request.CurrentApproverId !== currentUserId) {
+      throw new Error("Bạn không phải người phụ trách bước hiện tại.");
+    }
+  }
+
+  private _approveCurrentHistoryStep(params: {
+    historyStep: IWorkflowStep[];
+    currentStepOrder: number;
+    nextStepOrder?: number;
+    now: string;
+  }): IWorkflowStep[] {
+    return params.historyStep.map(step => {
+      if (step.stepOrder === params.currentStepOrder) {
+        return {
+          ...step,
+          status: StepStatus.Approved,
+          completedAt: params.now,
+          action: "Approved",
+        };
+      }
+
+      if (
+        params.nextStepOrder &&
+        step.stepOrder === params.nextStepOrder
+      ) {
+        return {
+          ...step,
+          status: StepStatus.Pending,
+          assignedAt: params.now,
+        };
+      }
+
+      return step;
+    });
+  }
+
+  private _rejectCurrentHistoryStep(params: {
+    historyStep: IWorkflowStep[];
+    currentStepOrder: number;
+    now: string;
+  }): IWorkflowStep[] {
+    return params.historyStep.map(step => {
+      if (step.stepOrder === params.currentStepOrder) {
+        return {
+          ...step,
+          status: StepStatus.Rejected,
+          completedAt: params.now,
+          action: "Rejected",
+        };
+      }
+
+      return step;
+    });
+  }
+
+  private _appendHistoryApproval(params: {
+    oldHistory?: string | IHistoryApproval[];
+    requestId: number;
+    stepOrder: number;
+    stepName: string;
+    actor: IActionUser;
+    action:
+      | "Submitted"
+      | "Approved"
+      | "Rejected"
+      | "Revision"
+      | "Recalled"
+      | "Forwarded";
+    now: string;
+    comment?: string;
+  }): IHistoryApproval[] {
+    const history = parseHistoryApproval(params.oldHistory);
+
+    return [
+      ...history,
+      {
+        requestId: params.requestId,
+
+        stepOrder: params.stepOrder,
+        stepName: params.stepName,
+
+        actorId: params.actor.Id,
+        actorName: params.actor.Title,
+        actorEmail: params.actor.EMail,
+
+        assigneeId: params.actor.Id,
+        assigneeName: params.actor.Title,
+        assigneeEmail: params.actor.EMail,
+
+        action: params.action,
+        actionTime: params.now,
+      },
+    ];
   }
 
   private _wrapError(e: unknown, method: string): Error {

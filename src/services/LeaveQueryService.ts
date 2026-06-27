@@ -1,6 +1,9 @@
 import { LeaveRepository } from "../repositories/LeaveRepository";
 import { RequestRepository } from "../repositories/RequestRepository";
-import { ILeaveOfAbsence, IRequest } from "../models";
+import {
+  ILeaveOfAbsence,
+  IRequest,
+} from "../models";
 import { RequestStatus } from "../constants/enums";
 
 export class LeaveQueryService {
@@ -9,29 +12,30 @@ export class LeaveQueryService {
 
   async getMyLeaves(
     currentUserId: number,
-    statusFilter?: RequestStatus,
+    statusFilter?: RequestStatus
   ): Promise<ILeaveOfAbsence[]> {
     return this._leaveRepo.getMyLeaves(currentUserId, statusFilter);
   }
 
-  async getPendingApprovals(approverId: number): Promise<ILeaveOfAbsence[]> {
-    return this._leaveRepo.getPendingApprovals(approverId);
-  }
 
   async getLeaveDetail(leaveId: number): Promise<{
     leave: ILeaveOfAbsence;
     activeRequest: IRequest | undefined;
     allRequests: IRequest[];
   }> {
-    const [leave, activeRequest] = await Promise.all([
+    const [leave, allRequests] = await Promise.all([
       this._leaveRepo.getLeaveById(leaveId),
-      this._requestRepo.getActiveRequestByLeave(leaveId),
+      this._requestRepo.getRequestsByLeave(leaveId),
     ]);
+
+    const activeRequest = allRequests.find(
+      request => request.Status === RequestStatus.Pending
+    );
 
     return {
       leave,
       activeRequest,
-      allRequests: activeRequest ? [activeRequest] : [],
+      allRequests,
     };
   }
 }
