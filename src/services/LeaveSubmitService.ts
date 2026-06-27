@@ -5,7 +5,7 @@ import {
 } from "../repositories/LeaveRepository";
 import { RequestRepository } from "../repositories/RequestRepository";
 import { StepStatus, RequestStatus } from "../constants/enums";
-import { IHistoryApproval } from "../models";
+import { IHistoryApproval, IWorkflowStep, IProcessStep } from "../models";
 import { ISubmitLeaveResult } from "../types/LeaveServiceType";
 
 export class LeaveSubmitService {
@@ -14,48 +14,82 @@ export class LeaveSubmitService {
   private _processService = new ProcessService();
 
   async submitLeave(input: ICreateLeaveInput): Promise<ISubmitLeaveResult> {
-    const leave = await this._leaveRepo.createLeave(input);
+    const now = new Date().toISOString();
 
-    const firstStep = await this._processService.getFirstStepApprover(
-      input.ProcessIDId,
+    const steps = await this._processService.getStepsByProcessId(
+      input.ProcessIDId
     );
 
-    const approverId = firstStep.Approver?.Id ?? input.ManagerId;
-
-    if (approverId == null) {
-      throw new Error(
-        `Step ${firstStep.StepOrder} chưa được cấu hình Approver và đơn cũng không có ManagerId`,
-      );
+    if (!steps.length) {
+      throw new Error("Quy trình chưa có bước nào được cấu hình.");
     }
 
-    await this._leaveRepo.updateLeaveFlow({
-      id: leave.Id,
-      statusRequest: RequestStatus.Pending,
-      statusStep: StepStatus.Pending,
-      indexOfStep: firstStep.StepOrder,
-      approvedById: approverId,
+    const submitStep =
+      steps.find(step => step.StepOrder === 1) ?? steps[0];
+
+    const nextStep = steps.find(
+      step => step.StepOrder > submitStep.StepOrder
+    );
+
+    if (!nextStep) {
+      throw new Error("Quy trình chưa có bước xử lý sau bước tạo đơn.");
+    }
+
+    const requesterId = input.RequesterId;
+
+    if (!requesterId) {
+      throw new Error("Không xác định được người tạo đơn.");
+    }
+
+    const historyStep = this._buildInitialHistoryStep({
+      steps,
+      submitStepOrder: submitStep.StepOrder,
+      currentStepOrder: nextStep.StepOrder,
+      requesterId,
+      requesterName: input.RequesterName,
+      requesterEmail: input.RequesterEmail,
+      now,
     });
 
     const historyApproval: IHistoryApproval[] = [
       {
+        requestId: undefined,
+
+        stepOrder: submitStep.StepOrder,
+        stepName: submitStep.Title,
+
+        actorId: requesterId,
+        actorName: input.RequesterName,
+        actorEmail: input.RequesterEmail,
+
+        assigneeId: requesterId,
+        assigneeName: input.RequesterName,
+        assigneeEmail: input.RequesterEmail,
+
         action: "Submitted",
-        stepOrder: firstStep.StepOrder,
-        stepName: firstStep.Title,
-        // // actorId: leave.Author?.Id,
-        // actorName: leave.Author?.Title,
-        // actorEmail: leave.Author?.EMail,
-        approverId,
-        approverName: firstStep.Approver?.Title,
-        approverEmail: firstStep.Approver?.EMail,
-        actionTime: new Date().toISOString(),
+        actionTime: now,
       },
     ];
 
+    const leave = await this._leaveRepo.createLeave({
+      ...input,
+      HistoryStep: historyStep,
+      initialStatusRequest: RequestStatus.Pending,
+      initialStatusStep: StepStatus.Pending,
+      initialIndexOfStep: nextStep.StepOrder,
+    });
+
     const request = await this._requestRepo.createRequest({
+      processIDId: input.ProcessIDId,
       absenceIDId: leave.Id,
-      approverId,
-      currentStep: firstStep.StepOrder,
-      department: leave.Author?.Title,
+
+      requesterId,
+      currentApproverId: nextStep.StepApproverId ?? null,
+
+      currentStep: nextStep.StepOrder,
+
+      department: input.department,
+      isEmergency: input.isEmergency,
       historyApproval,
     });
 
@@ -64,7 +98,71 @@ export class LeaveSubmitService {
     return {
       leave: updatedLeave,
       request,
-      nextApproverName: firstStep.Approver?.Title || "Người quản lý",
+      nextApproverName:
+        nextStep.StepApprover?.Title ?? "Chưa có người phụ trách",
     };
+  }
+
+  private _buildInitialHistoryStep(params: {
+    steps: IProcessStep[];
+    submitStepOrder: number;
+    currentStepOrder: number;
+    requesterId: number;
+    requesterName?: string;
+    requesterEmail?: string;
+    now: string;
+  }): IWorkflowStep[] {
+    return params.steps.map(step => {
+      const isSubmitStep = step.StepOrder === params.submitStepOrder;
+      const isCurrentStep = step.StepOrder === params.currentStepOrder;
+
+      if (isSubmitStep) {
+        return {
+          stepOrder: step.StepOrder,
+          title: step.Title,
+
+          assigneeId: params.requesterId,
+          assignee: params.requesterName ?? "Requester",
+          assigneeEmail: params.requesterEmail ?? null,
+
+          isRequesterStep: true,
+          isApprovalStep: false,
+
+          status: StepStatus.Approved,
+
+          assignedAt: params.now,
+          completedAt: params.now,
+
+          action: "Submitted",
+
+          slaHours: step.SLA_Hours,
+          beforeSLA: step.BeforeSLA,
+        };
+      }
+
+      return {
+        stepOrder: step.StepOrder,
+        title: step.Title,
+
+        assigneeId: step.StepApproverId ?? null,
+        assignee: step.StepApprover?.Title ?? null,
+        assigneeEmail: step.StepApprover?.EMail ?? null,
+
+        isRequesterStep: false,
+        isApprovalStep: true,
+
+        status: isCurrentStep
+          ? StepStatus.Pending
+          : StepStatus.Waiting,
+
+        assignedAt: isCurrentStep ? params.now : null,
+        completedAt: null,
+
+        action: undefined,
+
+        slaHours: step.SLA_Hours,
+        beforeSLA: step.BeforeSLA,
+      };
+    });
   }
 }

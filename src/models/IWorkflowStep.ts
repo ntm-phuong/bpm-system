@@ -1,36 +1,42 @@
-import { RequestStatus } from "../constants/enums";
+import {  StepStatus } from "../constants/enums";
 
 export interface IWorkflowStep {
   stepOrder: number;
   title: string;
 
-  assigneeId?: number;
-  assignee?: string;
+  assigneeId?: number | null;
+  assignee?: string | null;
+  assigneeEmail?: string | null;
 
-  status: RequestStatus;
+  isRequesterStep?: boolean;
+  isApprovalStep?: boolean;
 
-  assignedAt?: string;
-  completedAt?: string;
+  status: StepStatus;
 
-//   comment?: string;
+  assignedAt?: string | null;
+  completedAt?: string | null;
+
   action?: string;
 
   slaHours?: number;
   beforeSLA?: number;
+  expectedSLA?: string;
+  actualSLA?: number;
+  completedSLA?: boolean;
 }
 
-const mapActionToStatus = (action?: string): RequestStatus => {
+const mapActionToStatus = (action?: string): StepStatus => {
   switch ((action || "").toLowerCase()) {
     case "approved":
-      return RequestStatus.Approved;
+      return StepStatus.Approved;
     case "rejected":
-      return RequestStatus.Rejected;
+      return StepStatus.Rejected;
+    case "revision":
+      return StepStatus.Rejected; // hoặc thêm StepStatus.Revision nếu muốn rõ hơn
     case "forwarded":
-      return RequestStatus.Forwarded;
-    case "recalled":
-      return RequestStatus.Draft;
+      return StepStatus.Skipped;
     default:
-      return RequestStatus.Pending;
+      return StepStatus.Waiting;
   }
 };
 
@@ -42,7 +48,7 @@ const normalizeStep = (rawInput: unknown, index: number): IWorkflowStep => {
   const id = Number(raw?.id ?? raw?.step ?? index + 1) || index + 1;
   const actionRaw = raw?.action as string | undefined;
 
-  const status = (raw?.status as RequestStatus | undefined) ?? mapActionToStatus(actionRaw);
+  const status = (raw?.status as StepStatus | undefined) ?? mapActionToStatus(actionRaw);
 
   return {
     stepOrder: id,

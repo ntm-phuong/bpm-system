@@ -5,23 +5,34 @@ import { IWorkflowStep } from "./IWorkflowStep";
 export interface ILeaveOfAbsence {
   Id: number;
   Title: string;
+
   ProcessIDId: number;
-  ApprovedById?: number;
-  ApprovedBy?: IPerson;
-  AuthorId?: number;
-  Author?: IPerson;        
+
+  ApprovedById?: number | null;
+  ApprovedBy?: IPerson | null;
+
+ 
+
+  RequesterId?: number;
+  Requester?: IPerson;
+
   AbsenceType: string;
   PartialDay: string;
-  AbsenceDates: string;  
-  RequestReason?: string;  
+  AbsenceDates: string;
+  RequestReason?: string;
   TotalDays: number;
-  ManagerId?: number;
-  Manager?: IPerson;
-  NotifyToId?: number;
-  NotifyTo?: IPerson;
+
+  ManagerId?: number | null;
+  Manager?: IPerson | null;
+
+  NotifyToId?: number | null;
+  NotifyTo?: IPerson | null;
+
   LateEarlyHours?: number;
+
   IndexOfStep?: number;
   StatusStep?: StepStatus;
   StatusRequest?: RequestStatus;
+
   HistoryStep?: IWorkflowStep[];
 }

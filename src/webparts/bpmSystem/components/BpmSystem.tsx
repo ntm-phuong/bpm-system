@@ -6,27 +6,73 @@ import { MainLayout } from "../../../layouts/MainLayout";
 import { Sidebar, SidebarPageKey } from "../../../components/Sidebar/Sidebar";
 import { IBpmSystemProps } from "./IBpmSystemProps";
 import styles from "./BpmSystem.module.scss";
-
-// --- Import các Trang (Pages) ---
+import { RequestListPage } from "../../../pages/RequestListPage";
 import { WorkflowProcess } from "../../../pages/WorkflowProcessPage";
 
 const myTheme: PartialTheme = createTheme({});
 
-const BpmRouter: React.FC = () => {
-  // Lấy selectedProcessId từ AppContext để biết người dùng có đang chọn quy trình nào không
-  const { selectedProcessId } = useApp();
-  
-  const [selectedPage, setSelectedPage] = useState<SidebarPageKey>("home");
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
+const BpmRouter: React.FC<{ context: IBpmSystemProps["context"] }> = ({
+  context,
+}) => {
+  const { selectedProcessId, setCurrentUser } = useApp();
 
-  // --- LOGIC ĐIỀU HƯỚNG (ROUTING) ---
-  const renderContent = () => {
-    // 1. Nếu người dùng chọn một Quy trình cụ thể từ Sidebar -> Hiển thị trang WorkflowProcess
+  const [selectedPage, setSelectedPage] = useState<SidebarPageKey>("home");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] =
+    useState<boolean>(false);
+
+  const currentUserId = context.pageContext.legacyPageContext.userId;
+
+  React.useEffect(() => {
+    const user = context.pageContext.legacyPageContext;
+
+    setCurrentUser({
+      Id: user.userId,
+      Title: user.userDisplayName,
+      EMail: user.userEmail,
+    });
+  }, [context, setCurrentUser]);
+
+  const renderContent = (): JSX.Element | null => {
     if (selectedProcessId) {
       return <WorkflowProcess />;
     }
 
-    // 2. Nếu không có quy trình nào được chọn (Trang chủ mặc định)
+    if (selectedPage === "allRequests") {
+      return (
+        <RequestListPage
+          type="allRequests"
+          currentUserId={currentUserId}
+        />
+      );
+    }
+
+    if (selectedPage === "myRequests") {
+      return (
+        <RequestListPage
+          type="myRequests"
+          currentUserId={currentUserId}
+        />
+      );
+    }
+
+    if (selectedPage === "pendingRequests") {
+      return (
+        <RequestListPage
+          type="pendingRequests"
+          currentUserId={currentUserId}
+        />
+      );
+    }
+
+    if (selectedPage === "processedRequests") {
+      return (
+        <RequestListPage
+          type="processedRequests"
+          currentUserId={currentUserId}
+        />
+      );
+    }
+
     if (selectedPage === "home") {
       return (
         <div style={{ padding: "40px", textAlign: "center", color: "#605e5c" }}>
@@ -36,9 +82,6 @@ const BpmRouter: React.FC = () => {
       );
     }
 
-    // Tương lai bạn có thể thêm các trang khác vào đây:
-    // if (selectedPage === "myTasks") return <MyTasksDashboard />;
-    
     return null;
   };
 
@@ -54,22 +97,16 @@ const BpmRouter: React.FC = () => {
         />
       }
     >
-      <section className={styles.bpmSystem}>
-        {renderContent()}
-      </section>
+      <section className={styles.bpmSystem}>{renderContent()}</section>
     </MainLayout>
   );
 };
 
-const BpmSystem: React.FC<IBpmSystemProps> = ({
-  description,
-  userDisplayName,
-  context,
-}) => {
+const BpmSystem: React.FC<IBpmSystemProps> = ({ context }) => {
   return (
     <ThemeProvider theme={myTheme}>
       <AppProvider>
-        <BpmRouter />
+        <BpmRouter context={context} />
       </AppProvider>
     </ThemeProvider>
   );

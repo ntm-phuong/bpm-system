@@ -19,7 +19,6 @@ export const BaseFields: React.FC<IBaseFieldsProps> = ({
 }) => {
   return (
     <div className={styles.baseCard}>
-      {/* 1. Dòng: Lý do */}
       <div className={styles.formRow}>
         <div className={styles.labelCol}>Lý do</div>
         <div className={styles.inputCol}>
@@ -33,21 +32,6 @@ export const BaseFields: React.FC<IBaseFieldsProps> = ({
         </div>
       </div>
 
-      {/* 2. Dòng: Người phê duyệt */}
-      <div className={styles.formRow}>
-        <div className={styles.labelCol}>
-          Người phê duyệt <span className={styles.required}>*</span>
-        </div>
-        <div className={styles.inputCol}>
-          <TextField
-            placeholder="Tìm kiếm người dùng"
-            value={formData.Approver || ""}
-            onChange={(_, val) => onFieldChange("Approver", val)}
-          />
-        </div>
-      </div>
-
-      {/* 3. Dòng: Trạng thái khẩn cấp */}
       <div className={styles.formRow}>
         <div className={styles.labelCol}>Trạng thái khẩn cấp</div>
         <div className={styles.inputCol}>
@@ -55,13 +39,14 @@ export const BaseFields: React.FC<IBaseFieldsProps> = ({
             <Checkbox
               label="Có/Không"
               checked={!!formData.IsUrgent}
-              onChange={(_, checked) => onFieldChange("IsUrgent", checked)}
+              onChange={(_, checked) =>
+                onFieldChange("IsUrgent", checked)
+              }
             />
           </div>
         </div>
       </div>
 
-      {/* 4. Thanh hành động (Action Buttons) và Footer */}
       <div className={styles.actionsRow}>
         <div className={styles.buttonsGroup}>
           <button

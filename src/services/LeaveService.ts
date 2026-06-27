@@ -34,10 +34,6 @@ export class LeaveService {
     return this._queryService.getMyLeaves(currentUserId, statusFilter);
   }
 
-  getPendingApprovals(approverId: number) {
-    return this._queryService.getPendingApprovals(approverId);
-  }
-
   getLeaveDetail(leaveId: number) {
     return this._queryService.getLeaveDetail(leaveId);
   }

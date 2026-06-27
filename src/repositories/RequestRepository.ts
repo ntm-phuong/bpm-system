@@ -4,9 +4,37 @@ import { LISTS } from "../constants/lists";
 import { RequestStatus } from "../constants/enums";
 
 export interface ICreateRequestInput {
+  processIDId: number;
   absenceIDId: number;
-  approverId: number;
+
+  requesterId: number;
+  currentApproverId?: number | null;
+
   currentStep: number;
+  department?: string;
+  isEmergency?: boolean;
+  historyApproval?: IHistoryApproval[];
+}
+
+export interface IRequestFilterInput {
+  requesterId?: number;
+  currentApproverId?: number;
+
+  status?: RequestStatus;
+  statusNot?: RequestStatus;
+
+  absenceIDId?: number;
+  top?: number;
+  skip?: number;
+}
+
+export interface IUpdateRequestInput {
+  id: number;
+
+  status?: RequestStatus;
+  currentApproverId?: number | null;
+  currentStep?: number;
+
   department?: string;
   isEmergency?: boolean;
   historyApproval?: IHistoryApproval[];
@@ -15,41 +43,72 @@ export interface ICreateRequestInput {
 const REQUEST_SELECT = [
   "Id",
   "Title",
+
   "AbsenceIDId",
+  "AbsenceID/Id",
+  "AbsenceID/Title",
+
+  "ProcessIDId",
+  "ProcessID/Id",
+  "ProcessID/Title",
+
+  "RequesterId",
+  "Requester/Id",
+  "Requester/Title",
+  "Requester/EMail",
+
+  "CurrentApproverId",
+  "CurrentApprover/Id",
+  "CurrentApprover/Title",
+  "CurrentApprover/EMail",
+
   "Status",
   "CurrentStep",
   "IsEmergency",
   "Department",
-  "AbsenceID/Id",
-  "AbsenceID/Title",
-  "Approver/Id",
-  "Approver/Title",
-  "Approver/EMail",
-  "Author/Id",
-  "Author/Title",
-  "Author/EMail",
   "HistoryApproval",
 ] as const;
 
-const REQUEST_EXPAND = ["Approver", "Author", "AbsenceID"] as const;
-
+const REQUEST_EXPAND = [
+  "Requester",
+  "CurrentApprover",
+  "AbsenceID",
+  "ProcessID",
+] as const;
 export class RequestRepository extends BaseRepository {
+  // CREATE
+
   async createRequest(input: ICreateRequestInput): Promise<IRequest> {
+    const payload: Record<string, unknown> = {
+      Title: this.generateTitle("REQ", input.absenceIDId),
+
+      ProcessIDId: input.processIDId,
+      AbsenceIDId: input.absenceIDId,
+
+      RequesterId: input.requesterId,
+      CurrentApproverId: input.currentApproverId ?? null,
+
+      Status: RequestStatus.Pending,
+      CurrentStep: input.currentStep,
+
+      Department: input.department,
+      IsEmergency: input.isEmergency ?? false,
+
+      HistoryApproval: JSON.stringify(input.historyApproval || []),
+    };
+
+    if (!input.currentApproverId) {
+      delete payload.CurrentApproverId;
+    }
+
     const result = await this.sp.web.lists
       .getByTitle(LISTS.REQUESTS)
-      .items.add({
-        Title: this.generateTitle("REQ", input.absenceIDId),
-        AbsenceIDId: input.absenceIDId,
-        Status: RequestStatus.Pending,
-        ApproverId: input.approverId,
-        CurrentStep: input.currentStep,
-        Department: input.department,
-        IsEmergency: input.isEmergency ?? false,
-        HistoryApproval: JSON.stringify(input.historyApproval || []),
-      });
+      .items.add(payload);
 
     return this.getRequestById(result.Id);
   }
+
+  // READ
 
   async getRequestById(id: number): Promise<IRequest> {
     const item = await this.sp.web.lists
@@ -61,54 +120,191 @@ export class RequestRepository extends BaseRepository {
     return this._mapRequest(item);
   }
 
-  async getActiveRequestByLeave(
-    absenceIDId: number,
-  ): Promise<IRequest | undefined> {
-    const items = await this.sp.web.lists
+  async getRequests(filter: IRequestFilterInput = {}): Promise<IRequest[]> {
+    const filterStr = this._buildFilter(filter);
+
+    let query = this.sp.web.lists
       .getByTitle(LISTS.REQUESTS)
       .items.select(...REQUEST_SELECT)
       .expand(...REQUEST_EXPAND)
-      .filter(
-        `AbsenceIDId eq ${absenceIDId} and Status eq '${RequestStatus.Pending}'`,
-      )
-      .top(1)();
+      .orderBy("Created", false);
 
-    return items.length > 0 ? this._mapRequest(items[0]) : undefined;
+    if (filterStr) query = query.filter(filterStr);
+    if (filter.top) query = query.top(filter.top);
+    if (filter.skip) query = query.skip(filter.skip);
+
+    const items = await query();
+
+    return items.map(this._mapRequest.bind(this));
+  }
+
+  getAllRequests(top = 100): Promise<IRequest[]> {
+    return this.getRequests({ top });
+  }
+
+  getMyRequests(currentUserId: number, top = 100): Promise<IRequest[]> {
+    return this.getRequests({
+      requesterId: currentUserId,
+      top,
+    });
+  }
+
+  getPendingRequests(
+    currentApproverId: number,
+    top = 100,
+  ): Promise<IRequest[]> {
+    return this.getRequests({
+      currentApproverId,
+      status: RequestStatus.Pending,
+      top,
+    });
+  }
+
+  // getProcessedRequests(
+  //   currentApproverId: number,
+  //   top = 100,
+  // ): Promise<IRequest[]> {
+  //   return this.getRequests({
+  //     currentApproverId,
+  //     statusNot: RequestStatus.Pending,
+  //     top,
+  //   });
+  // }
+
+  getRequestsByLeave(absenceIDId: number, top = 100): Promise<IRequest[]> {
+    return this.getRequests({
+      absenceIDId,
+      top,
+    });
+  }
+
+  async getActiveRequestByLeave(
+    absenceIDId: number,
+  ): Promise<IRequest | undefined> {
+    const items = await this.getRequests({
+      absenceIDId,
+      status: RequestStatus.Pending,
+      top: 1,
+    });
+
+    return items[0];
+  }
+
+  // UPDATE
+
+  async updateRequest(input: IUpdateRequestInput): Promise<void> {
+    const payload = this._buildUpdatePayload(input);
+
+    await this.sp.web.lists
+      .getByTitle(LISTS.REQUESTS)
+      .items.getById(input.id)
+      .update(payload);
   }
 
   async closeRequest(id: number, status: RequestStatus): Promise<void> {
-    await this.sp.web.lists
-      .getByTitle(LISTS.REQUESTS)
-      .items.getById(id)
-      .update({ Status: status });
+    await this.updateRequest({
+      id,
+      status,
+    });
   }
 
   async updateHistoryApproval(
     requestId: number,
-    history: IHistoryApproval[],
+    historyApproval: IHistoryApproval[],
   ): Promise<void> {
-    await this.sp.web.lists
-      .getByTitle(LISTS.REQUESTS)
-      .items.getById(requestId)
-      .update({
-        HistoryApproval: JSON.stringify(history),
-      });
+    await this.updateRequest({
+      id: requestId,
+      historyApproval,
+    });
   }
 
+  // PRIVATE
+
+  private _buildFilter(filter: IRequestFilterInput): string | undefined {
+    const conditions: string[] = [];
+
+    if (filter.requesterId !== undefined) {
+      conditions.push(`RequesterId eq ${filter.requesterId}`);
+    }
+
+    if (filter.currentApproverId !== undefined) {
+      conditions.push(`CurrentApproverId eq ${filter.currentApproverId}`);
+    }
+
+    if (filter.status !== undefined) {
+      conditions.push(`Status eq '${filter.status}'`);
+    }
+
+    if (filter.statusNot !== undefined) {
+      conditions.push(`Status ne '${filter.statusNot}'`);
+    }
+
+    if (filter.absenceIDId !== undefined) {
+      conditions.push(`AbsenceIDId eq ${filter.absenceIDId}`);
+    }
+
+    return conditions.length > 0 ? conditions.join(" and ") : undefined;
+  }
+
+  private _buildUpdatePayload(
+    input: IUpdateRequestInput,
+  ): Record<string, unknown> {
+    const payload: Record<string, unknown> = {};
+
+    if (input.status !== undefined) {
+      payload.Status = input.status;
+    }
+
+    if (input.currentApproverId !== undefined) {
+      payload.CurrentApproverId = input.currentApproverId;
+    }
+
+    if (input.currentStep !== undefined) {
+      payload.CurrentStep = input.currentStep;
+    }
+
+    if (input.department !== undefined) {
+      payload.Department = input.department;
+    }
+
+    if (input.isEmergency !== undefined) {
+      payload.IsEmergency = input.isEmergency;
+    }
+
+    if (input.historyApproval !== undefined) {
+      payload.HistoryApproval = JSON.stringify(input.historyApproval);
+    }
+
+    return payload;
+  }
   private _mapRequest = (raw: any): IRequest => {
     const absenceIdValue = raw.AbsenceID?.Id ?? raw.AbsenceIDId;
 
     return {
       Id: raw.Id as number,
       Title: raw.Title as string,
+
       AbsenceIDId: absenceIdValue as number,
       AbsenceTitle: raw.AbsenceID?.Title,
+
+      ProcessIDId: raw.ProcessID?.Id ?? raw.ProcessIDId,
+      ProcessTitle: raw.ProcessID?.Title,
+
+      RequesterId: (raw.RequesterId as number | undefined) ?? raw.Requester?.Id,
+      Requester: this.mapPerson(raw, "Requester"),
+
+      CurrentApproverId:
+        (raw.CurrentApproverId as number | null | undefined) ??
+        raw.CurrentApprover?.Id ??
+        null,
+      CurrentApprover: this.mapPerson(raw, "CurrentApprover"),
+
       Status: raw.Status as RequestStatus,
-      Approver: this.mapPerson(raw, "Approver"),
-      Author: this.mapPerson(raw, "Author"),
       CurrentStep: raw.CurrentStep as number | undefined,
+
       IsEmergency: raw.IsEmergency as boolean | undefined,
       Department: raw.Department as string | undefined,
+
       HistoryApproval: (raw.HistoryApproval as string) ?? "[]",
     };
   };

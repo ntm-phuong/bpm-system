@@ -1,26 +1,27 @@
-import { ILeaveOfAbsence, IRequest, IWorkflowStep } from "../models"
+import { ILeaveOfAbsence, IRequest } from "../models";
+
+export interface IActionUser {
+  Id: number;
+  Title?: string;
+  EMail?: string;
+}
 
 export interface ApproveStepInput {
-  leaveId: number;
   requestId: number;
-  isLastStep: boolean;
-  stepHistory: IWorkflowStep;
+  currentUser: IActionUser;
   comment?: string;
 }
 
 export interface RejectLeaveInput {
-  leaveId: number;
   requestId: number;
-  stepOrder: number;
-  stepName: string;
-  approverEmail: string;
-  comment: string;
+  currentUser: IActionUser;
+  comment?: string;
 }
 
 export interface RecallLeaveInput {
-  leaveId: number;
   requestId: number;
-  recallerEmail: string;
+  currentUser: IActionUser;
+  comment?: string;
 }
 
 export interface ISubmitLeaveResult {

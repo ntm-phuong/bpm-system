@@ -1,12 +1,9 @@
-// src/services/ProcessService.ts
-import { ProcessRepository } from '../repositories/ProcessRepository';
+import { ProcessRepository } from "../repositories/ProcessRepository";
 import {
   IProcess,
   IProcessStep,
   IFieldConfig,
-} from '../models';
-
-// ─── Output types ──────────────────────────────────────────
+} from "../models";
 
 export interface IMenuItems {
   processId: number;
@@ -28,8 +25,6 @@ export interface IStepInfo {
   nextStep?: IProcessStep;
 }
 
-// ─── Service ───────────────────────────────────────────────
-
 export class ProcessService {
   private _repo: ProcessRepository;
 
@@ -37,25 +32,20 @@ export class ProcessService {
     this._repo = new ProcessRepository();
   }
 
-  // ═══════════════════════════════════════════════════════
-  // SIDEBAR
-  // ═══════════════════════════════════════════════════════
   async getMenuItems(): Promise<IMenuItems[]> {
     try {
       const processes = await this._repo.getAllActive();
+
       return processes.map(p => ({
         processId: p.Id,
         processCode: p.ProcessCode,
         title: p.Title,
       }));
     } catch (e) {
-      throw this._wrapError(e, 'getMenuItems');
+      throw this._wrapError(e, "getMenuItems");
     }
   }
 
-  // ═══════════════════════════════════════════════════════
-  // FORM CONFIG (Dành cho trang giao diện động)
-  // ═══════════════════════════════════════════════════════
   async loadFormConfig(processId: number): Promise<IFormConfig> {
     try {
       const [process, steps, allFieldConfigs] = await Promise.all([
@@ -64,30 +54,29 @@ export class ProcessService {
         this._repo.getFieldConfigs(processId),
       ]);
 
-      const data = { process, steps, allFieldConfigs };
-      console.log('Dữ liệu nhận từ SharePoint:', data);
-
       if (!process) {
         throw new Error(`Không tìm thấy quy trình với Id: ${processId}`);
       }
 
-      // ĐÃ SỬA: Dùng StepIDId thay vì StepId
       const commonFieldConfigs = allFieldConfigs.filter(f => !f.StepIDId);
       const fieldConfigsByStep: Record<number, IFieldConfig[]> = {};
 
       for (const step of steps) {
-        // Lấy config riêng của bước này
-        const stepSpecific = allFieldConfigs.filter(f => f.StepIDId === step.Id);
+        const stepSpecific = allFieldConfigs.filter(
+          f => f.StepIDId === step.Id
+        );
 
-        // ĐÃ TỐI ƯU: Merge config riêng đè lên config chung bằng findIndex (ES6)
         const merged = [...commonFieldConfigs];
+
         for (const sc of stepSpecific) {
-          const foundIndex = merged.findIndex(m => m.FieldInternalName === sc.FieldInternalName);
-          
+          const foundIndex = merged.findIndex(
+            m => m.FieldInternalName === sc.FieldInternalName
+          );
+
           if (foundIndex >= 0) {
-            merged[foundIndex] = sc; // Ghi đè
+            merged[foundIndex] = sc;
           } else {
-            merged.push(sc); // Thêm mới
+            merged.push(sc);
           }
         }
 
@@ -102,49 +91,62 @@ export class ProcessService {
         totalSteps: steps.length,
       };
     } catch (e) {
-      throw this._wrapError(e, 'loadFormConfig');
+      throw this._wrapError(e, "loadFormConfig");
     }
   }
 
-  // ═══════════════════════════════════════════════════════
-  // STEP NAVIGATION — Dành cho LeaveService điều phối luồng
-  // ═══════════════════════════════════════════════════════
-  async getStepInfo(processId: number, stepOrder: number): Promise<IStepInfo> {
+  async getStepsByProcessId(processId: number): Promise<IProcessStep[]> {
     try {
-      const [currentStep, totalSteps] = await Promise.all([
-        this._repo.getStepByOrder(processId, stepOrder),
-        this._repo.countSteps(processId),
-      ]);
+      return await this._repo.getStepsByProcessId(processId);
+    } catch (e) {
+      throw this._wrapError(e, "getStepsByProcessId");
+    }
+  }
+
+  async getStepInfo(
+    processId: number,
+    stepOrder: number
+  ): Promise<IStepInfo> {
+    try {
+      const steps = await this._repo.getStepsByProcessId(processId);
+
+      const currentStep = steps.find(
+        step => step.StepOrder === stepOrder
+      );
 
       if (!currentStep) {
-        throw new Error(`Không tìm thấy bước ${stepOrder} trong quy trình ${processId}`);
+        throw new Error(
+          `Không tìm thấy bước ${stepOrder} trong quy trình ${processId}`
+        );
       }
 
-      const isLastStep = stepOrder >= totalSteps;
+      const nextStep = steps.find(
+        step => step.StepOrder > stepOrder
+      );
 
-      const nextStep = isLastStep 
-        ? undefined 
-        : (await this._repo.getStepByOrder(processId, stepOrder + 1)) ?? undefined;
-
-      return { step: currentStep, isLastStep, nextStep };
+      return {
+        step: currentStep,
+        isLastStep: !nextStep,
+        nextStep,
+      };
     } catch (e) {
-      throw this._wrapError(e, 'getStepInfo');
+      throw this._wrapError(e, "getStepInfo");
     }
   }
 
-  async getFirstStepApprover(processId: number): Promise<IProcessStep> {
+  async getNextStep(
+    processId: number,
+    currentStepOrder: number
+  ): Promise<IProcessStep | undefined> {
     try {
-      const step = await this._repo.getStepByOrder(processId, 1);
-      if (!step) {
-        throw new Error(`Quy trình ${processId} chưa có bước nào được cấu hình`);
-      }
-      return step;
+      const steps = await this._repo.getStepsByProcessId(processId);
+
+      return steps.find(step => step.StepOrder > currentStepOrder);
     } catch (e) {
-      throw this._wrapError(e, 'getFirstStepApprover');
+      throw this._wrapError(e, "getNextStep");
     }
   }
 
-  // ─── Private ───────────────────────────────────────────
   private _wrapError(e: unknown, method: string): Error {
     const msg = e instanceof Error ? e.message : String(e);
     return new Error(`[ProcessService.${method}] ${msg}`);
