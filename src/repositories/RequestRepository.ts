@@ -9,7 +9,7 @@ export interface ICreateRequestInput {
 
   requesterId: number;
   currentApproverId?: number | null;
-
+  currentStepName?: string;
   currentStep: number;
   department?: string;
   isEmergency?: boolean;
@@ -34,6 +34,7 @@ export interface IUpdateRequestInput {
   status?: RequestStatus;
   currentApproverId?: number | null;
   currentStep?: number;
+  currentStepName?: string;
 
   department?: string;
   isEmergency?: boolean;
@@ -43,6 +44,7 @@ export interface IUpdateRequestInput {
 const REQUEST_SELECT = [
   "Id",
   "Title",
+  "Created",
 
   "AbsenceIDId",
   "AbsenceID/Id",
@@ -64,6 +66,7 @@ const REQUEST_SELECT = [
 
   "Status",
   "CurrentStep",
+  "CurrentStepName",
   "IsEmergency",
   "Department",
   "HistoryApproval",
@@ -94,6 +97,7 @@ export class RequestRepository extends BaseRepository {
       Department: input.department,
       IsEmergency: input.isEmergency ?? false,
 
+      CurrentStepName: input.currentStepName,
       HistoryApproval: JSON.stringify(input.historyApproval || []),
     };
 
@@ -159,17 +163,6 @@ export class RequestRepository extends BaseRepository {
       top,
     });
   }
-
-  // getProcessedRequests(
-  //   currentApproverId: number,
-  //   top = 100,
-  // ): Promise<IRequest[]> {
-  //   return this.getRequests({
-  //     currentApproverId,
-  //     statusNot: RequestStatus.Pending,
-  //     top,
-  //   });
-  // }
 
   getRequestsByLeave(absenceIDId: number, top = 100): Promise<IRequest[]> {
     return this.getRequests({
@@ -263,6 +256,10 @@ export class RequestRepository extends BaseRepository {
       payload.CurrentStep = input.currentStep;
     }
 
+    if (input.currentStepName !== undefined) {
+      payload.CurrentStepName = input.currentStepName;
+    }
+
     if (input.department !== undefined) {
       payload.Department = input.department;
     }
@@ -283,6 +280,7 @@ export class RequestRepository extends BaseRepository {
     return {
       Id: raw.Id as number,
       Title: raw.Title as string,
+      Created: raw.Created as string ,
 
       AbsenceIDId: absenceIdValue as number,
       AbsenceTitle: raw.AbsenceID?.Title,
@@ -301,6 +299,7 @@ export class RequestRepository extends BaseRepository {
 
       Status: raw.Status as RequestStatus,
       CurrentStep: raw.CurrentStep as number | undefined,
+      CurrentStepName: raw.CurrentStepName as string | undefined,
 
       IsEmergency: raw.IsEmergency as boolean | undefined,
       Department: raw.Department as string | undefined,

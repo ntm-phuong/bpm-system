@@ -27,7 +27,10 @@ export const RequestListPage: React.FC<IRequestListPageProps> = ({
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
   const repo = React.useMemo(() => new RequestRepository(), []);
-  const requestQueryService = React.useMemo(() => new RequestQueryService(), []);
+  const requestQueryService = React.useMemo(
+    () => new RequestQueryService(),
+    [],
+  );
 
   useEffect(() => {
     const load = async () => {
@@ -66,17 +69,19 @@ export const RequestListPage: React.FC<IRequestListPageProps> = ({
   const title = useMemo(() => getTitle(type), [type]);
 
   const statusOptions = useMemo(() => {
-    const statuses = Array.from(new Set(items.map(item => String(item.Status))));
+    const statuses = Array.from(
+      new Set(items.map((item) => String(item.Status))),
+    );
 
     return statuses.sort((firstStatus, secondStatus) =>
-      firstStatus.localeCompare(secondStatus)
+      firstStatus.localeCompare(secondStatus),
     );
   }, [items]);
 
   const filteredItems = useMemo(() => {
     const normalizedKeyword = searchKeyword.trim().toLowerCase();
 
-    return items.filter(item => {
+    return items.filter((item) => {
       const matchesStatus =
         statusFilter === "all" || String(item.Status) === statusFilter;
 
@@ -91,10 +96,10 @@ export const RequestListPage: React.FC<IRequestListPageProps> = ({
         item.CurrentApprover?.Title,
       ]
         .filter(Boolean)
-        .map(value => String(value).toLowerCase());
+        .map((value) => String(value).toLowerCase());
 
-      const matchesKeyword = searchableParts.some(value =>
-        value.includes(normalizedKeyword)
+      const matchesKeyword = searchableParts.some((value) =>
+        value.includes(normalizedKeyword),
       );
 
       return matchesStatus && matchesKeyword;
@@ -104,11 +109,11 @@ export const RequestListPage: React.FC<IRequestListPageProps> = ({
   const summary = useMemo(() => {
     return {
       total: items.length,
-      pending: items.filter(item => item.Status === RequestStatus.Pending)
+      pending: items.filter((item) => item.Status === RequestStatus.Pending)
         .length,
-      approved: items.filter(item => item.Status === RequestStatus.Approved)
+      approved: items.filter((item) => item.Status === RequestStatus.Approved)
         .length,
-      rejected: items.filter(item => item.Status === RequestStatus.Rejected)
+      rejected: items.filter((item) => item.Status === RequestStatus.Rejected)
         .length,
     };
   }, [items]);
@@ -119,20 +124,23 @@ export const RequestListPage: React.FC<IRequestListPageProps> = ({
       {
         value: RequestStatus.Pending,
         label: "Đang xử lý",
-        count: items.filter(item => item.Status === RequestStatus.Pending).length,
+        count: items.filter((item) => item.Status === RequestStatus.Pending)
+          .length,
       },
       {
         value: RequestStatus.Approved,
         label: "Đã duyệt",
-        count: items.filter(item => item.Status === RequestStatus.Approved).length,
+        count: items.filter((item) => item.Status === RequestStatus.Approved)
+          .length,
       },
       {
         value: RequestStatus.Rejected,
         label: "Từ chối",
-        count: items.filter(item => item.Status === RequestStatus.Rejected).length,
+        count: items.filter((item) => item.Status === RequestStatus.Rejected)
+          .length,
       },
     ],
-    [items]
+    [items],
   );
 
   return (
@@ -177,7 +185,7 @@ export const RequestListPage: React.FC<IRequestListPageProps> = ({
               type="text"
               placeholder="Theo mã phiếu, loại phiếu, phòng ban, người xử lý..."
               value={searchKeyword}
-              onChange={event => setSearchKeyword(event.target.value)}
+              onChange={(event) => setSearchKeyword(event.target.value)}
             />
           </div>
 
@@ -189,10 +197,10 @@ export const RequestListPage: React.FC<IRequestListPageProps> = ({
               id="request-status"
               className={styles.statusSelect}
               value={statusFilter}
-              onChange={event => setStatusFilter(event.target.value)}
+              onChange={(event) => setStatusFilter(event.target.value)}
             >
               <option value="all">Tất cả trạng thái</option>
-              {statusOptions.map(status => (
+              {statusOptions.map((status) => (
                 <option key={status} value={status}>
                   {getStatusText(status as RequestStatus)}
                 </option>
@@ -215,7 +223,7 @@ export const RequestListPage: React.FC<IRequestListPageProps> = ({
         </div>
 
         <div className={styles.statusTabs}>
-          {statusFilterTabs.map(tab => (
+          {statusFilterTabs.map((tab) => (
             <button
               key={tab.value}
               type="button"
@@ -230,7 +238,9 @@ export const RequestListPage: React.FC<IRequestListPageProps> = ({
           ))}
         </div>
 
-        <div className={styles.resultInfo}>Hiển thị {filteredItems.length} phiếu</div>
+        <div className={styles.resultInfo}>
+          Hiển thị {filteredItems.length} phiếu
+        </div>
 
         {loading && <p className={styles.feedback}>Đang tải dữ liệu...</p>}
 
@@ -245,31 +255,39 @@ export const RequestListPage: React.FC<IRequestListPageProps> = ({
                 <thead>
                   <tr>
                     <th>Mã phiếu</th>
-                    <th>Loại phiếu</th>
+                    <th>Tiêu đề </th>
+                    <th>Quy trình</th>
                     <th>Trạng thái</th>
+                    <th>Người yêu cầu</th>
                     <th>Người xử lý</th>
                     <th>Bước hiện tại</th>
-                    <th>Phòng ban</th>
+                    <th>Ngày yêu cầu</th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {filteredItems.map(item => (
+                  {filteredItems.map((item) => (
                     <tr key={item.Id}>
                       <td>#{item.Id}</td>
                       <td>{item.AbsenceTitle || "-"}</td>
+                      <td>{item.ProcessTitle || "-"}</td>
                       <td>
                         <span
                           className={`${styles.statusBadge} ${getStatusClassName(
-                            item.Status
+                            item.Status,
                           )}`}
                         >
                           {getStatusText(item.Status)}
                         </span>
                       </td>
+                      <td>{item.Requester?.Title || "-"}</td>
                       <td>{item.CurrentApprover?.Title || "-"}</td>
-                      <td>{item.CurrentStep || "-"}</td>
-                      <td>{item.Department || "-"}</td>
+                      <td>{item.CurrentStepName || "-"}</td>
+                      <td>
+                        {item.Created
+                          ? new Date(item.Created).toLocaleString("vi-VN")
+                          : "-"}
+                      </td>{" "}
                     </tr>
                   ))}
                 </tbody>
@@ -277,13 +295,13 @@ export const RequestListPage: React.FC<IRequestListPageProps> = ({
             </div>
 
             <div className={styles.cardList}>
-              {filteredItems.map(item => (
+              {filteredItems.map((item) => (
                 <article key={`card-${item.Id}`} className={styles.requestCard}>
                   <div className={styles.cardHeader}>
                     <h3>Mã phiếu #{item.Id}</h3>
                     <span
                       className={`${styles.statusBadge} ${getStatusClassName(
-                        item.Status
+                        item.Status,
                       )}`}
                     >
                       {getStatusText(item.Status)}
@@ -292,20 +310,37 @@ export const RequestListPage: React.FC<IRequestListPageProps> = ({
 
                   <dl className={styles.cardMeta}>
                     <div>
-                      <dt>Loại phiếu</dt>
+                      <dt>Tiêu đề</dt>
                       <dd>{item.AbsenceTitle || "-"}</dd>
                     </div>
+
+                    <div>
+                      <dt>Quy trình</dt>
+                      <dd>{item.ProcessTitle || "-"}</dd>
+                    </div>
+
+                    <div>
+                      <dt>Người yêu cầu</dt>
+                      <dd>{item.Requester?.Title || "-"}</dd>
+                    </div>
+
                     <div>
                       <dt>Người xử lý</dt>
                       <dd>{item.CurrentApprover?.Title || "-"}</dd>
                     </div>
+
                     <div>
                       <dt>Bước hiện tại</dt>
-                      <dd>{item.CurrentStep || "-"}</dd>
+                      <dd>{item.CurrentStepName || "-"}</dd>
                     </div>
+
                     <div>
-                      <dt>Phòng ban</dt>
-                      <dd>{item.Department || "-"}</dd>
+                      <dt>Ngày yêu cầu</dt>
+                      <dd>
+                        {item.Created
+                          ? new Date(item.Created).toLocaleString("vi-VN")
+                          : "-"}
+                      </dd>
                     </div>
                   </dl>
                 </article>

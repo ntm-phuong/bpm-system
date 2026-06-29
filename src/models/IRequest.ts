@@ -5,6 +5,7 @@ import { IPerson } from "./IPerson";
 export interface IRequest {
   Id: number;
   Title: string;
+  Created?: string;
 
   AbsenceIDId: number;
   AbsenceTitle?: string;
@@ -19,6 +20,7 @@ export interface IRequest {
   CurrentApprover?: IPerson | null;
 
   CurrentStep?: number;
+  CurrentStepName?: string;
   Status: RequestStatus;
 
   IsEmergency?: boolean;
