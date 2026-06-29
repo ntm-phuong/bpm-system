@@ -1,0 +1,38 @@
+declare const styles: {
+  page: string;
+  pageHeader: string;
+  title: string;
+  subtitle: string;
+  summaryRow: string;
+  summaryCard: string;
+  summaryLabel: string;
+  summaryValue: string;
+  panel: string;
+  filterPanel: string;
+  searchBox: string;
+  filterBox: string;
+  searchLabel: string;
+  searchInput: string;
+  statusSelect: string;
+  clearButton: string;
+  statusTabs: string;
+  statusTab: string;
+  activeTab: string;
+  resultInfo: string;
+  feedback: string;
+  tableWrapper: string;
+  table: string;
+  statusBadge: string;
+  pending: string;
+  approved: string;
+  rejected: string;
+  revision: string;
+  draft: string;
+  default: string;
+  cardList: string;
+  requestCard: string;
+  cardHeader: string;
+  cardMeta: string;
+};
+
+export default styles;

@@ -1,3 +1,8 @@
+.formContainer,
+.formContainer * {
+  box-sizing: border-box;
+}
+
 .formContainer {
   background-color: #ffffff;
   border: 1px solid #e1dfdd;
@@ -80,6 +85,7 @@
 
 .inputControl {
   width: 100%;
+  box-sizing: border-box;
   padding: 8px 12px;
   font-size: 14px;
   color: #323130;
@@ -89,16 +95,7 @@
   background-color: #ffffff;
   font-family: inherit;
   transition: border-color 0.2s;
-
-  &:focus {
-    border-color: #2b88d8;
-  }
-
-  &::placeholder {
-    color: #979593;
-  }
 }
-
 select.inputControl {
   cursor: pointer;
 }
