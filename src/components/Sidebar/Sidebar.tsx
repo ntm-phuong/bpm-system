@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Icon } from "@fluentui/react";
 import { useApp } from "../../context/AppContext";
 import { useMenuItems } from "../../hooks/UseMenuItems";
-import styles from "../../layouts/Sidebar.module.scss";
+import styles from "./Sidebar.module.scss";
 
 const bpmLogoUrl: string = require("../../webparts/bpmSystem/assets/bpmLogo.png");
 

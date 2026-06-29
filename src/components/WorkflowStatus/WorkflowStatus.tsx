@@ -1,5 +1,5 @@
 import * as React from 'react';
-import styles from '../WorkflowStatus.module.scss';
+import styles from './WorkflowStatus.module.scss';
 import { IWorkflowStep } from '../../models';
 
 // Định nghĩa màu sắc cho các trạng thái

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { TextField, Checkbox, Icon } from "@fluentui/react";
-import styles from "../BaseFields.module.scss";
+import styles from "./BaseFields.module.scss";
 
 export interface IBaseFieldsProps {
   formData: Record<string, any>;
