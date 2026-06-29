@@ -77,6 +77,7 @@ export class LeaveSubmitService {
       initialStatusRequest: RequestStatus.Pending,
       initialStatusStep: StepStatus.Pending,
       initialIndexOfStep: nextStep.StepOrder,
+      stepName: nextStep.Title,
     });
 
     const request = await this._requestRepo.createRequest({
@@ -87,6 +88,8 @@ export class LeaveSubmitService {
       currentApproverId: nextStep.StepApproverId ?? null,
 
       currentStep: nextStep.StepOrder,
+      currentStepName: nextStep.Title,
+
 
       department: input.department,
       isEmergency: input.isEmergency,

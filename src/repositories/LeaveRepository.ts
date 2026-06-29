@@ -27,12 +27,14 @@ export interface ICreateLeaveInput {
   initialStatusRequest?: RequestStatus;
   initialStatusStep?: StepStatus;
   initialIndexOfStep?: number;
+  stepName?: string;
 }
 export interface IUpdateLeaveFlowInput {
   id: number;
   statusRequest?: RequestStatus;
   statusStep?: StepStatus;
   indexOfStep?: number;
+  stepName?: string;
 
   approvedById?: number | null;
 
@@ -60,6 +62,7 @@ const LEAVE_SELECT = [
   "RequestReason",
 
   "IndexOfStep",
+  "StepName",
   "StatusStep",
   "StatusRequest",
   "HistoryStep",
@@ -112,9 +115,10 @@ export class LeaveRepository extends BaseRepository {
         ManagerId: input.ManagerId ?? null,
         NotifyToId: input.NotifyToId ?? null,
 
-        StatusRequest: RequestStatus.Draft,
-        StatusStep: StepStatus.Pending,
-        IndexOfStep: 0,
+        StatusRequest: input.initialStatusRequest ?? RequestStatus.Draft,
+        StatusStep: input.initialStatusStep ?? StepStatus.Pending,
+        IndexOfStep: input.initialIndexOfStep ?? 0,
+        StepName: input.stepName ?? "",
 
         HistoryStep: JSON.stringify(input.HistoryStep || []),
       });
@@ -194,6 +198,10 @@ export class LeaveRepository extends BaseRepository {
       payload.IndexOfStep = input.indexOfStep;
     }
 
+    if (input.stepName !== undefined) {
+      payload.StepName = input.stepName;
+    }
+
     if (input.approvedById !== undefined) {
       payload.ApprovedById = input.approvedById;
     }
@@ -242,6 +250,7 @@ export class LeaveRepository extends BaseRepository {
 
     LateEarlyHours: raw.LateEarlyHours as number | undefined,
 
+    StepName: raw.CurrentStepName as string | undefined,
     IndexOfStep: raw.IndexOfStep as number | undefined,
     StatusStep: raw.StatusStep as StepStatus | undefined,
     StatusRequest: raw.StatusRequest as RequestStatus | undefined,

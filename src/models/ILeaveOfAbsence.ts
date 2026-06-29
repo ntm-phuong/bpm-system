@@ -31,6 +31,7 @@ export interface ILeaveOfAbsence {
   LateEarlyHours?: number;
 
   IndexOfStep?: number;
+  StepName?: string;
   StatusStep?: StepStatus;
   StatusRequest?: RequestStatus;
 

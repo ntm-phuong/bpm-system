@@ -43,7 +43,7 @@ export class LeaveApprovalService {
 
       const stepInfo = await this._processService.getStepInfo(
         leave.ProcessIDId,
-        currentStepOrder
+        currentStepOrder,
       );
 
       const updatedHistoryStep = this._approveCurrentHistoryStep({
@@ -65,6 +65,9 @@ export class LeaveApprovalService {
       });
 
       if (stepInfo.isLastStep || !stepInfo.nextStep) {
+        // const nextStep = stepInfo.nextStep;
+        // const nextStepName = nextStep.Title;
+
         await this._leaveRepo.updateLeaveFlow({
           id: leave.Id,
           statusRequest: RequestStatus.Approved,
@@ -142,7 +145,7 @@ export class LeaveApprovalService {
 
       const stepInfo = await this._processService.getStepInfo(
         leave.ProcessIDId,
-        currentStepOrder
+        currentStepOrder,
       );
 
       const updatedHistoryStep = this._rejectCurrentHistoryStep({
@@ -242,7 +245,7 @@ export class LeaveApprovalService {
       Status: RequestStatus;
       CurrentApproverId?: number | null;
     },
-    currentUserId: number
+    currentUserId: number,
   ): void {
     if (request.Status !== RequestStatus.Pending) {
       throw new Error("Chỉ có thể xử lý request đang Pending.");
@@ -263,7 +266,7 @@ export class LeaveApprovalService {
     nextStepOrder?: number;
     now: string;
   }): IWorkflowStep[] {
-    return params.historyStep.map(step => {
+    return params.historyStep.map((step) => {
       if (step.stepOrder === params.currentStepOrder) {
         return {
           ...step,
@@ -273,10 +276,7 @@ export class LeaveApprovalService {
         };
       }
 
-      if (
-        params.nextStepOrder &&
-        step.stepOrder === params.nextStepOrder
-      ) {
+      if (params.nextStepOrder && step.stepOrder === params.nextStepOrder) {
         return {
           ...step,
           status: StepStatus.Pending,
@@ -293,7 +293,7 @@ export class LeaveApprovalService {
     currentStepOrder: number;
     now: string;
   }): IWorkflowStep[] {
-    return params.historyStep.map(step => {
+    return params.historyStep.map((step) => {
       if (step.stepOrder === params.currentStepOrder) {
         return {
           ...step,
