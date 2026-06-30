@@ -26,5 +26,12 @@ export interface IRequest {
   IsEmergency?: boolean;
   Department?: string;
 
+  ExpectedSLA?: number;
+  CurrentStepSLA?: number;
+  ActualSLA?: number;
+  CompleteSLA?: "InProgress" | "OnTime" | "Overdue";
+  SLAStartTime?: string;
+  SLAEndTime?: string;
+
   HistoryApproval?: string | IHistoryApproval[];
 }

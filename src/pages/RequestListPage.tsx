@@ -15,11 +15,13 @@ type RequestListType =
 interface IRequestListPageProps {
   type: RequestListType;
   currentUserId: number;
+  onOpenDetail: (requestId: number) => void;
 }
 
 export const RequestListPage: React.FC<IRequestListPageProps> = ({
   type,
   currentUserId,
+  onOpenDetail,
 }) => {
   const [items, setItems] = useState<IRequest[]>([]);
   const [loading, setLoading] = useState(false);
@@ -269,7 +271,15 @@ export const RequestListPage: React.FC<IRequestListPageProps> = ({
                   {filteredItems.map((item) => (
                     <tr key={item.Id}>
                       <td>#{item.Id}</td>
-                      <td>{item.AbsenceTitle || "-"}</td>
+                      <td>
+                        <button
+                          type="button"
+                          className={styles.titleLink}
+                          onClick={() => onOpenDetail(item.Id)}
+                        >
+                          {item.AbsenceTitle || "-"}
+                        </button>
+                      </td>
                       <td>{item.ProcessTitle || "-"}</td>
                       <td>
                         <span
