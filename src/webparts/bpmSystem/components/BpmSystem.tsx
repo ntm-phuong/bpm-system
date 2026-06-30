@@ -8,6 +8,7 @@ import { IBpmSystemProps } from "./IBpmSystemProps";
 import styles from "./BpmSystem.module.scss";
 import { RequestListPage } from "../../../pages/RequestListPage";
 import { WorkflowProcess } from "../../../pages/WorkflowProcessPage";
+import { RequestDetailPage } from "../../../pages/RequestDetailPage";
 
 const myTheme: PartialTheme = createTheme({});
 
@@ -17,10 +18,10 @@ const BpmRouter: React.FC<{ context: IBpmSystemProps["context"] }> = ({
   const { selectedProcessId, setCurrentUser } = useApp();
 
   const [selectedPage, setSelectedPage] = useState<SidebarPageKey>("home");
-  const [isSidebarCollapsed, setIsSidebarCollapsed] =
-    useState<boolean>(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
 
   const currentUserId = context.pageContext.legacyPageContext.userId;
+  const [selectedRequestId, setSelectedRequestId] = useState<number>();
 
   React.useEffect(() => {
     const user = context.pageContext.legacyPageContext;
@@ -33,6 +34,14 @@ const BpmRouter: React.FC<{ context: IBpmSystemProps["context"] }> = ({
   }, [context, setCurrentUser]);
 
   const renderContent = (): JSX.Element | null => {
+    if (selectedPage === "requestDetail" && selectedRequestId) {
+      return (
+        <RequestDetailPage
+          requestId={selectedRequestId}
+          onBack={() => setSelectedPage("myRequests")}
+        />
+      );
+    }
     if (selectedProcessId) {
       return <WorkflowProcess />;
     }
@@ -42,6 +51,10 @@ const BpmRouter: React.FC<{ context: IBpmSystemProps["context"] }> = ({
         <RequestListPage
           type="allRequests"
           currentUserId={currentUserId}
+          onOpenDetail={(requestId) => {
+            setSelectedRequestId(requestId);
+            setSelectedPage("requestDetail");
+          }}
         />
       );
     }
@@ -51,6 +64,10 @@ const BpmRouter: React.FC<{ context: IBpmSystemProps["context"] }> = ({
         <RequestListPage
           type="myRequests"
           currentUserId={currentUserId}
+          onOpenDetail={(requestId) => {
+            setSelectedRequestId(requestId);
+            setSelectedPage("requestDetail");
+          }}
         />
       );
     }
@@ -60,6 +77,10 @@ const BpmRouter: React.FC<{ context: IBpmSystemProps["context"] }> = ({
         <RequestListPage
           type="pendingRequests"
           currentUserId={currentUserId}
+          onOpenDetail={(requestId) => {
+            setSelectedRequestId(requestId);
+            setSelectedPage("requestDetail");
+          }}
         />
       );
     }
@@ -69,6 +90,10 @@ const BpmRouter: React.FC<{ context: IBpmSystemProps["context"] }> = ({
         <RequestListPage
           type="processedRequests"
           currentUserId={currentUserId}
+          onOpenDetail={(requestId) => {
+            setSelectedRequestId(requestId);
+            setSelectedPage("requestDetail");
+          }}
         />
       );
     }

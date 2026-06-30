@@ -10,6 +10,7 @@ export interface IRequestFormProps {
   formConfig: IFormConfig;
   formData: Record<string, any>;
   onFieldChange: (key: string, value: any) => void;
+  isReadOnly?: boolean;
 }
 
 const parseFieldOptions = (fieldOptions: string): string[] => {
@@ -32,7 +33,7 @@ const parseFieldOptions = (fieldOptions: string): string[] => {
   return [];
 };
 
-export const RequestForm: React.FC<IRequestFormProps> = ({ formConfig, formData, onFieldChange }) => {
+export const RequestForm: React.FC<IRequestFormProps> = ({ formConfig, formData, onFieldChange, isReadOnly }) => {
   // State để quản lý việc mở rộng / thu gọn form
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
   const [fieldValues, setFieldValues] = useState<Record<string, string | number | boolean>>({});
@@ -56,16 +57,9 @@ export const RequestForm: React.FC<IRequestFormProps> = ({ formConfig, formData,
     setIsExpanded(!isExpanded);
   };
 
-  // const setFieldValue = (fieldInternalName: string, value: string | number | boolean): void => {
-  //   setFieldValues((currentValues) => ({
-  //     ...currentValues,
-  //     [fieldInternalName]: value
-  //   }));
-  // };
-
   const renderFieldInput = (field: IFieldConfig): JSX.Element => {
     const value = formData[field.FieldInternalName];
-    const isReadOnly = !field.IsEditable;
+    const fieldReadOnly = isReadOnly || !field.IsEditable;
     const inputId = field.FieldInternalName;
 
     switch (field.FieldType) {
@@ -77,7 +71,7 @@ export const RequestForm: React.FC<IRequestFormProps> = ({ formConfig, formData,
             rows={4}
             value={typeof value === 'string' ? value : ''}
             onChange={(event) => onFieldChange(field.FieldInternalName, event.target.value)}
-            disabled={isReadOnly}
+            disabled={fieldReadOnly}
           />
         );
       case FieldType.Number:
@@ -91,7 +85,7 @@ export const RequestForm: React.FC<IRequestFormProps> = ({ formConfig, formData,
               const rawValue = event.target.value;
               onFieldChange(field.FieldInternalName, rawValue === '' ? '' : Number(rawValue));
             }}
-            disabled={isReadOnly}
+            disabled={fieldReadOnly}
           />
         );
       case FieldType.DateTime:
@@ -102,7 +96,7 @@ export const RequestForm: React.FC<IRequestFormProps> = ({ formConfig, formData,
             className={styles.inputControl}
             value={typeof value === 'string' ? value : ''}
             onChange={(event) => onFieldChange(field.FieldInternalName, event.target.value)}
-            disabled={isReadOnly}
+            disabled={fieldReadOnly}
           />
         );
       case FieldType.Choice:
@@ -114,7 +108,7 @@ export const RequestForm: React.FC<IRequestFormProps> = ({ formConfig, formData,
             className={styles.inputControl}
             value={typeof value === 'string' ? value : ''}
             onChange={(event) => onFieldChange(field.FieldInternalName, event.target.value)}
-            disabled={isReadOnly}
+            disabled={fieldReadOnly}
           >
             <option value="">--Lựa chọn--</option>
             {options.map((option) => (
@@ -132,7 +126,7 @@ export const RequestForm: React.FC<IRequestFormProps> = ({ formConfig, formData,
             className={styles.inputControl}
             value={typeof value === 'boolean' ? String(value) : ''}
             onChange={(event) => onFieldChange(field.FieldInternalName, event.target.value === 'true')}
-            disabled={isReadOnly}
+            disabled={fieldReadOnly}
           >
             <option value="">--Lựa chọn--</option>
             <option value="true">Có</option>
@@ -148,7 +142,7 @@ export const RequestForm: React.FC<IRequestFormProps> = ({ formConfig, formData,
             value={typeof value === 'string' ? value : ''}
             placeholder="Tìm kiếm người dùng"
             onChange={(event) => onFieldChange(field.FieldInternalName, event.target.value)}
-            disabled={isReadOnly}
+            disabled={fieldReadOnly}
           />
         );
       case FieldType.Text:
@@ -160,7 +154,7 @@ export const RequestForm: React.FC<IRequestFormProps> = ({ formConfig, formData,
             className={styles.inputControl}
             value={typeof value === 'string' ? value : ''}
             onChange={(event) => onFieldChange(field.FieldInternalName, event.target.value)}
-            disabled={isReadOnly}
+            disabled={fieldReadOnly}
           />
         );
     }

@@ -16,7 +16,9 @@ export type SidebarPageKey =
   | "myRequests"
   | "pendingRequests"
   | "processedRequests"
-  | `process-${number}`;
+  | `process-${number}`
+  | "requestDetail";
+
 
 interface INavigationItem {
   key: SidebarPageKey;

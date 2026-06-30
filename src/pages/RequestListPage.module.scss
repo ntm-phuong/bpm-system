@@ -31,6 +31,20 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.titleLink {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: #0f6cbd;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
 .summaryCard {
   background: rgba(255, 255, 255, 0.14);
   border: 1px solid rgba(255, 255, 255, 0.2);
