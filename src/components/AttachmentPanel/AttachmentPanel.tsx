@@ -59,7 +59,7 @@ export const AttachmentPanel: React.FC<IAttachmentPanelProps> = ({ files, onFile
 
   return (
     <div className={styles.attachmentCard}>
-      <h3 className={styles.headerTitle}>Tài liệu đính kèmxxxxxx</h3>
+      <h3 className={styles.headerTitle}>Tài liệu đính kèm</h3>
 
       {/* Vùng kéo thả file (Dashed border area) */}
       <div 
