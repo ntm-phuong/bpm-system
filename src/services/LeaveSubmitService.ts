@@ -7,11 +7,13 @@ import { RequestRepository } from "../repositories/RequestRepository";
 import { StepStatus, RequestStatus } from "../constants/enums";
 import { IHistoryApproval, IWorkflowStep, IProcessStep } from "../models";
 import { ISubmitLeaveResult } from "../types/LeaveServiceType";
+import { SLAService } from "./SLAService";
 
 export class LeaveSubmitService {
   private _leaveRepo = new LeaveRepository();
   private _requestRepo = new RequestRepository();
   private _processService = new ProcessService();
+  private _slaService = new SLAService();
 
   async submitLeave(input: ICreateLeaveInput): Promise<ISubmitLeaveResult> {
     const now = new Date().toISOString();
@@ -80,6 +82,12 @@ export class LeaveSubmitService {
       stepName: nextStep.Title,
     });
 
+    const slaInfo = this._slaService.calculateSLAOnSubmit(
+      steps,
+      nextStep.StepOrder,
+      now,
+    );
+
     const request = await this._requestRepo.createRequest({
       processIDId: input.ProcessIDId,
       absenceIDId: leave.Id,
@@ -94,6 +102,12 @@ export class LeaveSubmitService {
       department: input.department,
       isEmergency: input.isEmergency,
       historyApproval,
+      expectedSLA: slaInfo.ExpectedSLA,
+      currentStepSLA: slaInfo.CurrentStepSLA,
+      actualSLA: slaInfo.ActualSLA,
+      completeSLA: slaInfo.CompleteSLA,
+      slaStartTime: slaInfo.SLAStartTime,
+      slaEndTime: slaInfo.SLAEndTime,
     });
 
     const updatedLeave = await this._leaveRepo.getLeaveById(leave.Id);
