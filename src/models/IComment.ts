@@ -1,5 +1,8 @@
 import { IPerson } from "./IPerson";
-
+export interface IAttachmentFile {
+  FileName: string;
+  ServerRelativeUrl: string;
+}
 export interface IComment {
   Id: number;
   Title: string;
@@ -7,5 +10,6 @@ export interface IComment {
   Content: string;
   CommentBy?: IPerson; 
   CommentById?: number;           // Person
-  CreatedDate: string;            // ISO Date string
+  Created: string;  
+  AttachmentFiles?: IAttachmentFile[];
 }

@@ -7,6 +7,8 @@ import { RequestForm } from "../components/RequestForm/RequestForm";
 import { RequestRepository } from "../repositories/RequestRepository";
 import { LeaveRepository } from "../repositories/LeaveRepository";
 import { useProcessForm } from "../hooks/UseProcessForm";
+import { RequestGeneralInfo } from "../components/RequestInfo";
+import { HistoryApproval } from "../components/HistoryApproval/HistoryApproval";
 
 const requestRepository = new RequestRepository();
 const leaveRepository = new LeaveRepository();
@@ -27,9 +29,7 @@ export const RequestDetailPage: React.FC<IRequestDetailPageProps> = ({
 
   const processId = request?.ProcessIDId;
 
-  const { formConfig, loading, error } = useProcessForm(
-    processId ?? undefined
-  );
+  const { formConfig, loading, error } = useProcessForm(processId ?? undefined);
 
   React.useEffect(() => {
     void loadDetail();
@@ -53,7 +53,7 @@ export const RequestDetailPage: React.FC<IRequestDetailPageProps> = ({
       }
 
       const absenceData = await leaveRepository.getLeaveById(
-        requestData.AbsenceIDId
+        requestData.AbsenceIDId,
       );
 
       setAbsence(absenceData);
@@ -106,6 +106,7 @@ export const RequestDetailPage: React.FC<IRequestDetailPageProps> = ({
       <button type="button" onClick={onBack}>
         Quay lại
       </button>
+      
 
       <WorkflowStatus steps={workflowSteps} />
 
@@ -115,6 +116,18 @@ export const RequestDetailPage: React.FC<IRequestDetailPageProps> = ({
         onFieldChange={handleFieldChange}
         isReadOnly={true}
       />
+      <RequestGeneralInfo
+        requesterName={request.Requester?.Title}
+        approverName={request.CurrentApprover?.Title}
+        status={request.Status}
+        expectedSLA={request.ExpectedSLA}
+        currentStepSLA={request.CurrentStepSLA}
+        actualSLA={request.ActualSLA}
+        completeSLA={request.CompleteSLA}
+        isEmergency={request.IsEmergency}
+      />
+
+      <HistoryApproval historyApproval={request.HistoryApproval} />
     </div>
   );
 };

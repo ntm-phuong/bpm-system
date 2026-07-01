@@ -14,6 +14,12 @@ export interface ICreateRequestInput {
   department?: string;
   isEmergency?: boolean;
   historyApproval?: IHistoryApproval[];
+  expectedSLA?: number;
+  currentStepSLA?: number;
+  actualSLA?: number;
+  completeSLA?: "InProgress" | "OnTime" | "Overdue";
+  slaStartTime?: string;
+  slaEndTime?: string;
 }
 
 export interface IRequestFilterInput {
@@ -39,6 +45,12 @@ export interface IUpdateRequestInput {
   department?: string;
   isEmergency?: boolean;
   historyApproval?: IHistoryApproval[];
+  expectedSLA?: number;
+  currentStepSLA?: number;
+  actualSLA?: number;
+  completeSLA?: "InProgress" | "OnTime" | "Overdue";
+  slaStartTime?: string;
+  slaEndTime?: string;
 }
 
 const REQUEST_SELECT = [
@@ -69,6 +81,12 @@ const REQUEST_SELECT = [
   "CurrentStepName",
   "IsEmergency",
   "Department",
+  "ExpectedSLA",
+  "CurrentStepSLA",
+  "ActualSLA",
+  "CompleteSLA",
+  "SLAStartTime",
+  "SLAEndTime",
   "HistoryApproval",
 ] as const;
 
@@ -96,6 +114,13 @@ export class RequestRepository extends BaseRepository {
 
       Department: input.department,
       IsEmergency: input.isEmergency ?? false,
+
+      ExpectedSLA: input.expectedSLA,
+      CurrentStepSLA: input.currentStepSLA,
+      ActualSLA: input.actualSLA,
+      CompleteSLA: input.completeSLA,
+      SLAStartTime: input.slaStartTime,
+      SLAEndTime: input.slaEndTime,
 
       CurrentStepName: input.currentStepName,
       HistoryApproval: JSON.stringify(input.historyApproval || []),
@@ -272,6 +297,30 @@ export class RequestRepository extends BaseRepository {
       payload.HistoryApproval = JSON.stringify(input.historyApproval);
     }
 
+    if (input.expectedSLA !== undefined) {
+      payload.ExpectedSLA = input.expectedSLA;
+    }
+
+    if (input.currentStepSLA !== undefined) {
+      payload.CurrentStepSLA = input.currentStepSLA;
+    }
+
+    if (input.actualSLA !== undefined) {
+      payload.ActualSLA = input.actualSLA;
+    }
+
+    if (input.completeSLA !== undefined) {
+      payload.CompleteSLA = input.completeSLA;
+    }
+
+    if (input.slaStartTime !== undefined) {
+      payload.SLAStartTime = input.slaStartTime;
+    }
+
+    if (input.slaEndTime !== undefined) {
+      payload.SLAEndTime = input.slaEndTime;
+    }
+
     return payload;
   }
   private _mapRequest = (raw: any): IRequest => {
@@ -303,6 +352,14 @@ export class RequestRepository extends BaseRepository {
 
       IsEmergency: raw.IsEmergency as boolean | undefined,
       Department: raw.Department as string | undefined,
+
+      ExpectedSLA: raw.ExpectedSLA as number | undefined,
+      CurrentStepSLA: raw.CurrentStepSLA as number | undefined,
+      ActualSLA: raw.ActualSLA as number | undefined,
+      CompleteSLA:
+        raw.CompleteSLA as IRequest["CompleteSLA"],
+      SLAStartTime: raw.SLAStartTime as string | undefined,
+      SLAEndTime: raw.SLAEndTime as string | undefined,
 
       HistoryApproval: (raw.HistoryApproval as string) ?? "[]",
     };
