@@ -3,6 +3,7 @@ import { SPFx } from "@pnp/sp";
 import "@pnp/sp/items";
 import "@pnp/sp/webs";
 import "@pnp/sp/lists";
+import "@pnp/sp/attachments";
 import "@pnp/sp/fields";
 import "@pnp/sp/site-users/web";
 

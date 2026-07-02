@@ -7,3 +7,4 @@ export * from './ILeaveOfAbsence';
 export * from './IRequest';
 export * from './IHistoryApproval';
 export * from './IWorkflowStep';
+export * from './IComment';
