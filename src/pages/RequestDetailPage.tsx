@@ -9,6 +9,7 @@ import { LeaveRepository } from "../repositories/LeaveRepository";
 import { useProcessForm } from "../hooks/UseProcessForm";
 import { RequestGeneralInfo } from "../components/RequestInfo";
 import { HistoryApproval } from "../components/HistoryApproval/HistoryApproval";
+import { RequestComment } from "../components/RequestComment/RequestComment";
 
 const requestRepository = new RequestRepository();
 const leaveRepository = new LeaveRepository();
@@ -128,6 +129,11 @@ export const RequestDetailPage: React.FC<IRequestDetailPageProps> = ({
       />
 
       <HistoryApproval historyApproval={request.HistoryApproval} />
+
+      <RequestComment
+        requestId={request.Id}
+        currentUserId={request.RequesterId ?? 0}
+      />
     </div>
   );
 };
