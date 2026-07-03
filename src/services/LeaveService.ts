@@ -1,17 +1,13 @@
-import { RequestStatus } from "../constants/enums";
+import { RequestStatus, WorkflowAction } from "../constants/enums";
 import { ICreateLeaveInput } from "../repositories/LeaveRepository";
 import { LeaveSubmitService } from "./LeaveSubmitService";
-import { LeaveApprovalService } from "./LeaveApprovalService";
 import { LeaveQueryService } from "./LeaveQueryService";
-import {
-  ApproveStepInput,
-  RejectLeaveInput,
-  
-} from "../types/LeaveServiceType";
+import { RequestActionService } from "./RequestActionService";
+import { ApproveStepInput, RejectLeaveInput } from "../types/LeaveServiceType";
 
 export class LeaveService {
   private _submitService = new LeaveSubmitService();
-  private _approvalService = new LeaveApprovalService();
+  private _requestActionService = new RequestActionService();
   private _queryService = new LeaveQueryService();
 
   submitLeave(input: ICreateLeaveInput) {
@@ -19,15 +15,21 @@ export class LeaveService {
   }
 
   approveStep(input: ApproveStepInput) {
-    return this._approvalService.approveStep(input);
+    return this._requestActionService.processAction({
+      ...input,
+      action: WorkflowAction.Approved,
+    });
   }
 
   rejectLeave(input: RejectLeaveInput) {
-    return this._approvalService.rejectLeave(input);
+    return this._requestActionService.processAction({
+      ...input,
+      action: WorkflowAction.Rejected,
+    });
   }
 
   // recallLeave(input: RecallLeaveInput) {
-  //   return this._approvalService.recallLeave(input);
+  //   return this._requestActionService.processAction(input);
   // }
 
   getMyLeaves(currentUserId: number, statusFilter?: RequestStatus) {
