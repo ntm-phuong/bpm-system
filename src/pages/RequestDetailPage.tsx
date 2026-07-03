@@ -11,14 +11,13 @@ import { RequestGeneralInfo } from "../components/RequestInfo/RequestInfo";
 import { HistoryApproval } from "../components/HistoryApproval/HistoryApproval";
 import { RequestComment } from "../components/RequestComment/RequestComment";
 import { RequestActions } from "../components/RequestAction/RequestActions";
-import { LeaveApprovalService } from "../services/LeaveApprovalService";
-import { RequestStatus } from "../constants/enums";
+import { RequestActionService } from "../services/RequestActionService";
+import { WorkflowAction, RequestStatus } from "../constants/enums";
 import { useApp } from "../context/AppContext";
 
 const requestRepository = new RequestRepository();
 const leaveRepository = new LeaveRepository();
-const leaveApprovalService = new LeaveApprovalService();
-
+const requestActionService = new RequestActionService();
 
 interface IRequestDetailPageProps {
   requestId: number;
@@ -30,7 +29,6 @@ export const RequestDetailPage: React.FC<IRequestDetailPageProps> = ({
   requestId,
   onBack,
   currentUserId,
-
 }) => {
   const { currentUser } = useApp();
   const [request, setRequest] = useState<any>(null);
@@ -94,8 +92,9 @@ export const RequestDetailPage: React.FC<IRequestDetailPageProps> = ({
     try {
       setSubmittingAction(true);
 
-      await leaveApprovalService.approveStep({
+      await requestActionService.processAction({
         requestId: request.Id,
+        action: WorkflowAction.Approved,
         currentUser: {
           Id: currentUser?.Id ?? currentUserId,
           Title: currentUser?.Title,
@@ -118,8 +117,9 @@ export const RequestDetailPage: React.FC<IRequestDetailPageProps> = ({
     try {
       setSubmittingAction(true);
 
-      await leaveApprovalService.rejectLeave({
+      await requestActionService.processAction({
         requestId: request.Id,
+        action: WorkflowAction.Rejected,
         currentUser: {
           Id: currentUser?.Id ?? currentUserId,
           Title: currentUser?.Title,
@@ -169,7 +169,6 @@ export const RequestDetailPage: React.FC<IRequestDetailPageProps> = ({
       <button type="button" onClick={onBack}>
         Quay lại
       </button>
-      
 
       <WorkflowStatus steps={workflowSteps} />
 
@@ -179,7 +178,7 @@ export const RequestDetailPage: React.FC<IRequestDetailPageProps> = ({
         onFieldChange={handleFieldChange}
         isReadOnly={true}
       />
-       <RequestActions
+      <RequestActions
         canProcess={canProcess}
         submitting={submittingAction}
         onApprove={(reason) => {
@@ -204,11 +203,7 @@ export const RequestDetailPage: React.FC<IRequestDetailPageProps> = ({
 
       <HistoryApproval historyApproval={request.HistoryApproval} />
 
-      <RequestComment
-        requestId={request.Id}
-        currentUserId={currentUserId}
-      />
-     
+      <RequestComment requestId={request.Id} currentUserId={currentUserId} />
     </div>
   );
 };
