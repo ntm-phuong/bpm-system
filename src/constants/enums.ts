@@ -16,6 +16,16 @@ export enum StepStatus {
   Waiting = "Waiting", // Chưa đến (MỚI THÊM)
 }
 
+export enum WorkflowAction{
+  Submitted = "Submitted", // Đã tạo đơn
+  Approved = "Approved", // Đã duyệt
+  Rejected = "Rejected", // Từ chối
+  Revision = "Revision", // Yêu cầu chỉnh sửa
+  Recalled = "Recalled", // Thu hồi
+  Forwarded = "Forwarded", // Chuyển tiếp
+  Reassigned = "Reassigned", // Giao lại
+}
+
 
 export enum EmployeeRole {
   Staff = "Staff",

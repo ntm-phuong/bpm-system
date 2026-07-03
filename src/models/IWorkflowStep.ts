@@ -1,5 +1,5 @@
-import {  StepStatus } from "../constants/enums";
-
+import { StepStatus, WorkflowAction } from "../constants/enums";
+import { mapActionToStepStatus } from "../utils/WorkflowStatusMapper";
 export interface IWorkflowStep {
   stepOrder: number;
   title: string;
@@ -16,7 +16,7 @@ export interface IWorkflowStep {
   assignedAt?: string | null;
   completedAt?: string | null;
 
-  action?: string;
+  action?: WorkflowAction;
 
   slaHours?: number;
   beforeSLA?: number;
@@ -25,44 +25,32 @@ export interface IWorkflowStep {
   completedSLA?: boolean;
 }
 
-const mapActionToStatus = (action?: string): StepStatus => {
-  switch ((action || "").toLowerCase()) {
-    case "approved":
-      return StepStatus.Approved;
-    case "rejected":
-      return StepStatus.Rejected;
-    case "revision":
-      return StepStatus.Rejected; // hoặc thêm StepStatus.Revision nếu muốn rõ hơn
-    case "forwarded":
-      return StepStatus.Skipped;
-    default:
-      return StepStatus.Waiting;
-  }
-};
-
 const toRecord = (value: unknown): Record<string, unknown> =>
-  typeof value === "object" && value !== null ? (value as Record<string, unknown>) : {};
+  typeof value === "object" && value !== null
+    ? (value as Record<string, unknown>)
+    : {};
 
 const normalizeStep = (rawInput: unknown, index: number): IWorkflowStep => {
   const raw = toRecord(rawInput);
-  const id = Number(raw?.id ?? raw?.step ?? index + 1) || index + 1;
-  const actionRaw = raw?.action as string | undefined;
+  const id =
+    Number(raw?.stepOrder ?? raw?.id ?? raw?.step ?? index + 1) || index + 1;
+  const actionRaw = raw?.action as WorkflowAction | undefined;
 
-  const status = (raw?.status as StepStatus | undefined) ?? mapActionToStatus(actionRaw);
-
+  const status =
+    (raw?.status as StepStatus | undefined) ??
+    (actionRaw ? mapActionToStepStatus(actionRaw) : StepStatus.Waiting);
   return {
     stepOrder: id,
     title: String(raw?.title ?? raw?.stepName ?? `Step ${id}`),
-    assigneeId: typeof raw?.assigneeId === "number" ? raw.assigneeId : undefined,
-    
-    // Ép kiểu các trường còn lại về string | undefined
+    assigneeId:
+      typeof raw?.assigneeId === "number" ? raw.assigneeId : undefined,
+
     assignee: (raw?.assignee ?? raw?.approver) as string | undefined,
     status,
     assignedAt: raw?.assignedAt as string | undefined,
     completedAt: (raw?.completedAt ?? raw?.actionTime) as string | undefined,
-    // comment: raw?.comment as string | undefined,
     action: actionRaw,
-    
+
     slaHours: typeof raw?.slaHours === "number" ? raw.slaHours : undefined,
     beforeSLA: typeof raw?.beforeSLA === "number" ? raw.beforeSLA : undefined,
   };

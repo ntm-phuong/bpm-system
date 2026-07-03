@@ -7,26 +7,37 @@ import { RequestForm } from "../components/RequestForm/RequestForm";
 import { RequestRepository } from "../repositories/RequestRepository";
 import { LeaveRepository } from "../repositories/LeaveRepository";
 import { useProcessForm } from "../hooks/UseProcessForm";
-import { RequestGeneralInfo } from "../components/RequestInfo";
+import { RequestGeneralInfo } from "../components/RequestInfo/RequestInfo";
 import { HistoryApproval } from "../components/HistoryApproval/HistoryApproval";
 import { RequestComment } from "../components/RequestComment/RequestComment";
+import { RequestActions } from "../components/RequestAction/RequestActions";
+import { LeaveApprovalService } from "../services/LeaveApprovalService";
+import { RequestStatus } from "../constants/enums";
+import { useApp } from "../context/AppContext";
 
 const requestRepository = new RequestRepository();
 const leaveRepository = new LeaveRepository();
+const leaveApprovalService = new LeaveApprovalService();
+
 
 interface IRequestDetailPageProps {
   requestId: number;
   onBack: () => void;
+  currentUserId: number;
 }
 
 export const RequestDetailPage: React.FC<IRequestDetailPageProps> = ({
   requestId,
   onBack,
+  currentUserId,
+
 }) => {
+  const { currentUser } = useApp();
   const [request, setRequest] = useState<any>(null);
   const [absence, setAbsence] = useState<any>(null);
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [loadingDetail, setLoadingDetail] = useState(true);
+  const [submittingAction, setSubmittingAction] = useState(false);
 
   const processId = request?.ProcessIDId;
 
@@ -79,6 +90,54 @@ export const RequestDetailPage: React.FC<IRequestDetailPageProps> = ({
     }));
   };
 
+  const handleApprove = async (reason?: string): Promise<void> => {
+    try {
+      setSubmittingAction(true);
+
+      await leaveApprovalService.approveStep({
+        requestId: request.Id,
+        currentUser: {
+          Id: currentUser?.Id ?? currentUserId,
+          Title: currentUser?.Title,
+          EMail: currentUser?.EMail,
+        },
+        comment: reason,
+      });
+
+      alert("Duyệt phiếu thành công.");
+      await loadDetail();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      alert(`Duyệt phiếu thất bại: ${message}`);
+    } finally {
+      setSubmittingAction(false);
+    }
+  };
+
+  const handleReject = async (reason: string): Promise<void> => {
+    try {
+      setSubmittingAction(true);
+
+      await leaveApprovalService.rejectLeave({
+        requestId: request.Id,
+        currentUser: {
+          Id: currentUser?.Id ?? currentUserId,
+          Title: currentUser?.Title,
+          EMail: currentUser?.EMail,
+        },
+        comment: reason,
+      });
+
+      alert("Từ chối phiếu thành công.");
+      await loadDetail();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      alert(`Từ chối phiếu thất bại: ${message}`);
+    } finally {
+      setSubmittingAction(false);
+    }
+  };
+
   if (loadingDetail || loading) {
     return <div style={{ padding: 20 }}>Đang tải chi tiết phiếu...</div>;
   }
@@ -90,6 +149,9 @@ export const RequestDetailPage: React.FC<IRequestDetailPageProps> = ({
   if (!request || !absence || !formConfig) {
     return <div style={{ padding: 20 }}>Không có dữ liệu phiếu.</div>;
   }
+  const canProcess =
+    request.CurrentApproverId === currentUserId &&
+    request.Status === RequestStatus.Pending;
 
   const workflowSteps =
     typeof absence.HistoryStep === "string"
@@ -117,6 +179,18 @@ export const RequestDetailPage: React.FC<IRequestDetailPageProps> = ({
         onFieldChange={handleFieldChange}
         isReadOnly={true}
       />
+       <RequestActions
+        canProcess={canProcess}
+        submitting={submittingAction}
+        onApprove={(reason) => {
+          void handleApprove(reason);
+        }}
+        onReject={(reason) => {
+          void handleReject(reason);
+        }}
+        onForward={() => alert("Chức năng chuyển bước đang được phát triển.")}
+        onReassign={() => alert("Chức năng giao lại đang được phát triển.")}
+      />
       <RequestGeneralInfo
         requesterName={request.Requester?.Title}
         approverName={request.CurrentApprover?.Title}
@@ -132,8 +206,9 @@ export const RequestDetailPage: React.FC<IRequestDetailPageProps> = ({
 
       <RequestComment
         requestId={request.Id}
-        currentUserId={request.RequesterId ?? 0}
+        currentUserId={currentUserId}
       />
+     
     </div>
   );
 };

@@ -4,7 +4,11 @@ import {
   ICreateLeaveInput,
 } from "../repositories/LeaveRepository";
 import { RequestRepository } from "../repositories/RequestRepository";
-import { StepStatus, RequestStatus } from "../constants/enums";
+import { StepStatus, WorkflowAction } from "../constants/enums";
+import {
+  mapActionToRequestStatus,
+  mapActionToStepStatus,
+} from "../utils/WorkflowStatusMapper";
 import { IHistoryApproval, IWorkflowStep, IProcessStep } from "../models";
 import { ISubmitLeaveResult } from "../types/LeaveServiceType";
 import { SLAService } from "./SLAService";
@@ -17,20 +21,22 @@ export class LeaveSubmitService {
 
   async submitLeave(input: ICreateLeaveInput): Promise<ISubmitLeaveResult> {
     const now = new Date().toISOString();
+    const action = WorkflowAction.Submitted;
+    const requestStatus = mapActionToRequestStatus(action);
+    const submitStepStatus = mapActionToStepStatus(action);
 
     const steps = await this._processService.getStepsByProcessId(
-      input.ProcessIDId
+      input.ProcessIDId,
     );
 
     if (!steps.length) {
       throw new Error("Quy trình chưa có bước nào được cấu hình.");
     }
 
-    const submitStep =
-      steps.find(step => step.StepOrder === 1) ?? steps[0];
+    const submitStep = steps.find((step) => step.StepOrder === 1) ?? steps[0];
 
     const nextStep = steps.find(
-      step => step.StepOrder > submitStep.StepOrder
+      (step) => step.StepOrder > submitStep.StepOrder,
     );
 
     if (!nextStep) {
@@ -51,6 +57,8 @@ export class LeaveSubmitService {
       requesterName: input.RequesterName,
       requesterEmail: input.RequesterEmail,
       now,
+      action,
+      submitStepStatus,
     });
 
     const historyApproval: IHistoryApproval[] = [
@@ -68,7 +76,7 @@ export class LeaveSubmitService {
         assigneeName: input.RequesterName,
         assigneeEmail: input.RequesterEmail,
 
-        action: "Submitted",
+        action,
         actionTime: now,
       },
     ];
@@ -76,7 +84,7 @@ export class LeaveSubmitService {
     const leave = await this._leaveRepo.createLeave({
       ...input,
       HistoryStep: historyStep,
-      initialStatusRequest: RequestStatus.Pending,
+      initialStatusRequest: requestStatus,
       initialStatusStep: StepStatus.Pending,
       initialIndexOfStep: nextStep.StepOrder,
       stepName: nextStep.Title,
@@ -97,7 +105,7 @@ export class LeaveSubmitService {
 
       currentStep: nextStep.StepOrder,
       currentStepName: nextStep.Title,
-
+      status: requestStatus,
 
       department: input.department,
       isEmergency: input.isEmergency,
@@ -128,8 +136,10 @@ export class LeaveSubmitService {
     requesterName?: string;
     requesterEmail?: string;
     now: string;
+    action: WorkflowAction;
+    submitStepStatus: StepStatus;
   }): IWorkflowStep[] {
-    return params.steps.map(step => {
+    return params.steps.map((step) => {
       const isSubmitStep = step.StepOrder === params.submitStepOrder;
       const isCurrentStep = step.StepOrder === params.currentStepOrder;
 
@@ -145,12 +155,12 @@ export class LeaveSubmitService {
           isRequesterStep: true,
           isApprovalStep: false,
 
-          status: StepStatus.Approved,
+          status: params.submitStepStatus,
 
           assignedAt: params.now,
           completedAt: params.now,
 
-          action: "Submitted",
+          action: params.action,
 
           slaHours: step.SLA_Hours,
           beforeSLA: step.BeforeSLA,
@@ -168,9 +178,7 @@ export class LeaveSubmitService {
         isRequesterStep: false,
         isApprovalStep: true,
 
-        status: isCurrentStep
-          ? StepStatus.Pending
-          : StepStatus.Waiting,
+        status: isCurrentStep ? StepStatus.Pending : StepStatus.Waiting,
 
         assignedAt: isCurrentStep ? params.now : null,
         completedAt: null,

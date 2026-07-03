@@ -240,10 +240,6 @@ export const RequestListPage: React.FC<IRequestListPageProps> = ({
           ))}
         </div>
 
-        <div className={styles.resultInfo}>
-          Hiển thị {filteredItems.length} phiếu
-        </div>
-
         {loading && <p className={styles.feedback}>Đang tải dữ liệu...</p>}
 
         {!loading && filteredItems.length === 0 && (

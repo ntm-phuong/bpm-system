@@ -77,7 +77,7 @@ export const HistoryApproval: React.FC<IHistoryApprovalProps> = ({
             className={styles.detailButton}
             onClick={() => setShowDetail(true)}
           >
-            Chi Tiết ⊙
+            Chi Tiết
           </button>
         </>
       )}

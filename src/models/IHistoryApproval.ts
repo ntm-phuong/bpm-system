@@ -1,3 +1,4 @@
+import {WorkflowAction} from "../constants/enums"
 export interface IHistoryApproval {
   requestId?: number;
 
@@ -13,15 +14,10 @@ export interface IHistoryApproval {
   assigneeEmail?: string | null;
 
 
-  action:
-    | "Submitted"
-    | "Approved"
-    | "Rejected"
-    | "Revision"
-    | "Recalled"
-    | "Forwarded";
+  action: WorkflowAction;
 
   actionTime: string;
+  comment?: string;
 
 }
 export const parseHistoryApproval = (

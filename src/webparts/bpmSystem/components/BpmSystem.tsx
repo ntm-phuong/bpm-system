@@ -38,6 +38,7 @@ const BpmRouter: React.FC<{ context: IBpmSystemProps["context"] }> = ({
       return (
         <RequestDetailPage
           requestId={selectedRequestId}
+          currentUserId={currentUserId}
           onBack={() => setSelectedPage("myRequests")}
         />
       );
