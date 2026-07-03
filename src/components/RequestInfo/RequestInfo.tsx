@@ -1,5 +1,5 @@
 import * as React from "react";
-import styles from "./RequestInfo.module.scss";
+import styles from "../RequestInfo.module.scss";
 
 interface IRequestGeneralInfoProps {
   requesterName?: string;

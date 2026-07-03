@@ -7,7 +7,11 @@ import {
   IHistoryApproval,
   parseHistoryApproval,
 } from "../models";
-import { StepStatus, RequestStatus } from "../constants/enums";
+import { StepStatus, RequestStatus, WorkflowAction } from "../constants/enums";
+import {
+  mapActionToRequestStatus,
+  mapActionToStepStatus,
+} from "../utils/WorkflowStatusMapper";
 import { IApproveResult } from "../types/LeaveServiceType";
 
 interface IActionUser {
@@ -28,6 +32,8 @@ export class LeaveApprovalService {
   }): Promise<IApproveResult> {
     try {
       const now = new Date().toISOString();
+      
+      const action = WorkflowAction.Approved;
 
       const request = await this._requestRepo.getRequestById(input.requestId);
 
@@ -46,11 +52,20 @@ export class LeaveApprovalService {
         currentStepOrder,
       );
 
+      const isFinalStep = stepInfo.isLastStep || !stepInfo.nextStep;
+
+      const requestStatus = mapActionToRequestStatus(action, isFinalStep);
+
+      const stepStatus = mapActionToStepStatus(action);
+
       const updatedHistoryStep = this._approveCurrentHistoryStep({
         historyStep: leave.HistoryStep ?? [],
         currentStepOrder,
         nextStepOrder: stepInfo.nextStep?.StepOrder,
         now,
+        action,
+        stepStatus,
+
       });
 
       const updatedHistoryApproval = this._appendHistoryApproval({
@@ -59,7 +74,7 @@ export class LeaveApprovalService {
         stepOrder: currentStepOrder,
         stepName: stepInfo.step.Title,
         actor: input.currentUser,
-        action: "Approved",
+        action: action,
         now,
         comment: input.comment,
       });
@@ -70,8 +85,8 @@ export class LeaveApprovalService {
 
         await this._leaveRepo.updateLeaveFlow({
           id: leave.Id,
-          statusRequest: RequestStatus.Approved,
-          statusStep: StepStatus.Approved,
+          statusRequest: requestStatus,
+          statusStep: stepStatus,
           indexOfStep: currentStepOrder,
           approvedById: input.currentUser.Id,
           historyStep: updatedHistoryStep,
@@ -79,8 +94,9 @@ export class LeaveApprovalService {
 
         await this._requestRepo.updateRequest({
           id: request.Id,
-          status: RequestStatus.Approved,
-          currentApproverId: null,
+          status: requestStatus,
+          // currentApproverId: null,
+          currentApproverId: input.currentUser.Id,
           currentStep: currentStepOrder,
           historyApproval: updatedHistoryApproval,
         });
@@ -95,18 +111,19 @@ export class LeaveApprovalService {
 
       await this._leaveRepo.updateLeaveFlow({
         id: leave.Id,
-        statusRequest: RequestStatus.Pending,
+        statusRequest: requestStatus,
         statusStep: StepStatus.Pending,
         indexOfStep: stepInfo.nextStep.StepOrder,
-        approvedById: input.currentUser.Id,
+        approvedById: stepInfo.nextStep.StepApproverId ?? undefined,
         historyStep: updatedHistoryStep,
       });
 
       await this._requestRepo.updateRequest({
         id: request.Id,
-        status: RequestStatus.Pending,
+        status: requestStatus,
         currentApproverId: stepInfo.nextStep.StepApproverId ?? null,
         currentStep: stepInfo.nextStep.StepOrder,
+        currentStepName: stepInfo.nextStep.Title,
         historyApproval: updatedHistoryApproval,
       });
 
@@ -130,6 +147,9 @@ export class LeaveApprovalService {
   }): Promise<ILeaveOfAbsence> {
     try {
       const now = new Date().toISOString();
+      const action = WorkflowAction.Rejected;
+      const requestStatus = mapActionToRequestStatus(action);
+      const stepStatus = mapActionToStepStatus(action);
 
       const request = await this._requestRepo.getRequestById(input.requestId);
 
@@ -152,6 +172,8 @@ export class LeaveApprovalService {
         historyStep: leave.HistoryStep ?? [],
         currentStepOrder,
         now,
+        action,
+        stepStatus, 
       });
 
       const updatedHistoryApproval = this._appendHistoryApproval({
@@ -160,15 +182,15 @@ export class LeaveApprovalService {
         stepOrder: currentStepOrder,
         stepName: stepInfo.step.Title,
         actor: input.currentUser,
-        action: "Rejected",
+        action,
         now,
         comment: input.comment,
       });
 
       await this._leaveRepo.updateLeaveFlow({
         id: leave.Id,
-        statusRequest: RequestStatus.Rejected,
-        statusStep: StepStatus.Rejected,
+        statusRequest: requestStatus,
+        statusStep: stepStatus,
         indexOfStep: currentStepOrder,
         approvedById: input.currentUser.Id,
         historyStep: updatedHistoryStep,
@@ -176,8 +198,9 @@ export class LeaveApprovalService {
 
       await this._requestRepo.updateRequest({
         id: request.Id,
-        status: RequestStatus.Rejected,
-        currentApproverId: null,
+        status: requestStatus,
+        // currentApproverId: null,
+        currentApproverId: input.currentUser.Id,
         currentStep: currentStepOrder,
         historyApproval: updatedHistoryApproval,
       });
@@ -188,57 +211,6 @@ export class LeaveApprovalService {
     }
   }
 
-  async recallLeave(input: {
-    requestId: number;
-    currentUser: IActionUser;
-    comment?: string;
-  }): Promise<ILeaveOfAbsence> {
-    try {
-      const now = new Date().toISOString();
-
-      const request = await this._requestRepo.getRequestById(input.requestId);
-      const leave = await this._leaveRepo.getLeaveById(request.AbsenceIDId);
-
-      if (leave.StatusRequest !== RequestStatus.Pending) {
-        throw new Error("Chỉ được thu hồi đơn đang ở trạng thái Pending.");
-      }
-
-      if (leave.RequesterId !== input.currentUser.Id) {
-        throw new Error("Bạn không phải người tạo đơn này.");
-      }
-
-      const updatedHistoryApproval = this._appendHistoryApproval({
-        oldHistory: request.HistoryApproval,
-        requestId: request.Id,
-        stepOrder: request.CurrentStep ?? 0,
-        stepName: "Recall Request",
-        actor: input.currentUser,
-        action: "Recalled",
-        now,
-        comment: input.comment,
-      });
-
-      await this._leaveRepo.updateLeaveFlow({
-        id: leave.Id,
-        statusRequest: RequestStatus.Draft,
-        statusStep: StepStatus.Waiting,
-        indexOfStep: request.CurrentStep,
-        historyStep: leave.HistoryStep ?? [],
-      });
-
-      await this._requestRepo.updateRequest({
-        id: request.Id,
-        status: RequestStatus.Draft,
-        currentApproverId: null,
-        currentStep: request.CurrentStep,
-        historyApproval: updatedHistoryApproval,
-      });
-
-      return this._leaveRepo.getLeaveById(leave.Id);
-    } catch (e) {
-      throw this._wrapError(e, "recallLeave");
-    }
-  }
 
   private _validateProcessableRequest(
     request: {
@@ -265,14 +237,16 @@ export class LeaveApprovalService {
     currentStepOrder: number;
     nextStepOrder?: number;
     now: string;
+    action: WorkflowAction;
+    stepStatus: StepStatus;
   }): IWorkflowStep[] {
     return params.historyStep.map((step) => {
       if (step.stepOrder === params.currentStepOrder) {
         return {
           ...step,
-          status: StepStatus.Approved,
+          status: params.stepStatus,
           completedAt: params.now,
-          action: "Approved",
+          action: params.action,
         };
       }
 
@@ -292,14 +266,16 @@ export class LeaveApprovalService {
     historyStep: IWorkflowStep[];
     currentStepOrder: number;
     now: string;
+    action: WorkflowAction;
+    stepStatus: StepStatus;
   }): IWorkflowStep[] {
     return params.historyStep.map((step) => {
       if (step.stepOrder === params.currentStepOrder) {
         return {
           ...step,
-          status: StepStatus.Rejected,
+          status: params.stepStatus,
           completedAt: params.now,
-          action: "Rejected",
+          action: params.action,
         };
       }
 
@@ -313,13 +289,7 @@ export class LeaveApprovalService {
     stepOrder: number;
     stepName: string;
     actor: IActionUser;
-    action:
-      | "Submitted"
-      | "Approved"
-      | "Rejected"
-      | "Revision"
-      | "Recalled"
-      | "Forwarded";
+    action: WorkflowAction;
     now: string;
     comment?: string;
   }): IHistoryApproval[] {
@@ -343,6 +313,7 @@ export class LeaveApprovalService {
 
         action: params.action,
         actionTime: params.now,
+        // comment: params.comment,
       },
     ];
   }

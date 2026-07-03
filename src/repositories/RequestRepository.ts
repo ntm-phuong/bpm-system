@@ -6,6 +6,7 @@ import { RequestStatus } from "../constants/enums";
 export interface ICreateRequestInput {
   processIDId: number;
   absenceIDId: number;
+  status: RequestStatus;
 
   requesterId: number;
   currentApproverId?: number | null;

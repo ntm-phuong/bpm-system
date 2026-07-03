@@ -6,7 +6,7 @@ import { LeaveQueryService } from "./LeaveQueryService";
 import {
   ApproveStepInput,
   RejectLeaveInput,
-  RecallLeaveInput,
+  
 } from "../types/LeaveServiceType";
 
 export class LeaveService {
@@ -26,9 +26,9 @@ export class LeaveService {
     return this._approvalService.rejectLeave(input);
   }
 
-  recallLeave(input: RecallLeaveInput) {
-    return this._approvalService.recallLeave(input);
-  }
+  // recallLeave(input: RecallLeaveInput) {
+  //   return this._approvalService.recallLeave(input);
+  // }
 
   getMyLeaves(currentUserId: number, statusFilter?: RequestStatus) {
     return this._queryService.getMyLeaves(currentUserId, statusFilter);
