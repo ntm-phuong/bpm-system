@@ -47,13 +47,14 @@ export class ApproveActionHandler {
     const requestStatus = mapActionToRequestStatus(action, isFinalStep);
     const stepStatus = mapActionToStepStatus(action);
 
-    const updatedHistoryStep = this._historyService.approveCurrentHistoryStep({
+    const currentHistoryStep = this._historyService.updateCurrentStep({
       historyStep: leave.HistoryStep ?? [],
       currentStepOrder,
-      nextStepOrder: stepInfo.nextStep?.StepOrder,
+      //   nextStepOrder: stepInfo.nextStep?.StepOrder,
       now,
       action,
       stepStatus,
+      completedAt: now,
     });
 
     const updatedHistoryApproval = this._historyService.appendHistoryApproval({
@@ -75,7 +76,7 @@ export class ApproveActionHandler {
         indexOfStep: currentStepOrder,
         stepName: stepInfo.step.Title,
         approvedById: input.currentUser.Id,
-        historyStep: updatedHistoryStep,
+        historyStep: currentHistoryStep,
       });
 
       await this._requestRepo.updateRequest({
@@ -101,6 +102,19 @@ export class ApproveActionHandler {
       throw new Error("Không tìm thấy bước tiếp theo.");
     }
 
+    const nextHistoryStep = this._historyService.markNextStepPending({
+      historyStep: currentHistoryStep,
+      nextStepOrder: nextStep.StepOrder,
+      now,
+      assignee: nextStep.StepApprover
+        ? {
+            Id: nextStep.StepApproverId!,
+            Title: nextStep.StepApprover.Title,
+            EMail: nextStep.StepApprover.EMail,
+          }
+        : undefined,
+    });
+
     await this._leaveRepo.updateLeaveFlow({
       id: leave.Id,
       statusRequest: requestStatus,
@@ -108,7 +122,7 @@ export class ApproveActionHandler {
       indexOfStep: nextStep.StepOrder,
       stepName: nextStep.Title,
       approvedById: nextStep.StepApproverId ?? undefined,
-      historyStep: updatedHistoryStep,
+      historyStep: nextHistoryStep,
     });
 
     await this._requestRepo.updateRequest({

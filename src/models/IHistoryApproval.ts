@@ -9,7 +9,7 @@ export interface IHistoryApproval {
   actorName?: string;
   actorEmail?: string;
 
-    assigneeId?: number | null;
+  assigneeId?: number | null;
   assigneeName?: string | null;
   assigneeEmail?: string | null;
 

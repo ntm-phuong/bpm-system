@@ -3,15 +3,11 @@ import { LeaveRepository } from "../../repositories/LeaveRepository";
 import { RequestRepository } from "../../repositories/RequestRepository";
 import { ILeaveOfAbsence } from "../../models";
 import { IRequestActionInput } from "../../types/RequestActionType";
-import { WorkflowAction } from "../../constants/enums";
-import {
-  mapActionToRequestStatus,
-  mapActionToStepStatus,
-} from "../../utils/WorkflowStatusMapper";
+import { RequestStatus, StepStatus, WorkflowAction } from "../../constants/enums";
 import { WorkflowHistoryService } from "../workflow/WorkflowHistoryService";
 import { WorkflowValidationService } from "../workflow/WorkflowValidationService";
 
-export class RejectActionHandler {
+export class ReassignActionHandler {
   private _leaveRepo = new LeaveRepository();
   private _requestRepo = new RequestRepository();
   private _processService = new ProcessService();
@@ -20,7 +16,13 @@ export class RejectActionHandler {
 
   async handle(input: IRequestActionInput): Promise<ILeaveOfAbsence> {
     const now = new Date().toISOString();
-    const action = WorkflowAction.Rejected;
+    const action = WorkflowAction.Reassigned;
+
+    const targetUser = input.targetUser;
+
+    if (!targetUser?.Id) {
+      throw new Error("Reassign cần có người được giao lại.");
+    }
 
     const request = await this._requestRepo.getRequestById(input.requestId);
 
@@ -42,46 +44,42 @@ export class RejectActionHandler {
       currentStepOrder,
     );
 
-    const requestStatus = mapActionToRequestStatus(action);
-    const stepStatus = mapActionToStepStatus(action);
-
-    const currentHistoryStep =
-      this._historyService.updateCurrentStep({
-        historyStep: leave.HistoryStep ?? [],
-        currentStepOrder,
-        now,
-        action,
-        stepStatus,
-        completedAt: now,
+    const currentHistoryStep = this._historyService.updateCurrentStep({
+      historyStep: leave.HistoryStep ?? [],
+      currentStepOrder,
+      now,
+      action,
+      stepStatus: StepStatus.Pending,
+      assignedAt: now,
+      assignee: targetUser,
     });
-    
 
-    const updatedHistoryApproval =
-      this._historyService.appendHistoryApproval({
-        oldHistory: request.HistoryApproval,
-        requestId: request.Id,
-        stepOrder: currentStepOrder,
-        stepName: stepInfo.step.Title,
-        actor: input.currentUser,
-        action,
-        now,
-        comment: input.comment,
-      });
+    const updatedHistoryApproval = this._historyService.appendHistoryApproval({
+      oldHistory: request.HistoryApproval,
+      requestId: request.Id,
+      stepOrder: currentStepOrder,
+      stepName: stepInfo.step.Title,
+      actor: input.currentUser,
+      assignee: targetUser,
+      action,
+      now,
+      comment: input.comment,
+    });
 
     await this._leaveRepo.updateLeaveFlow({
       id: leave.Id,
-      statusRequest: requestStatus,
-      statusStep: stepStatus,
+      statusRequest: RequestStatus.Pending,
+      statusStep: StepStatus.Pending,
       indexOfStep: currentStepOrder,
       stepName: stepInfo.step.Title,
-      approvedById: input.currentUser.Id,
+      approvedById: targetUser.Id,
       historyStep: currentHistoryStep,
     });
 
     await this._requestRepo.updateRequest({
       id: request.Id,
-      status: requestStatus,
-      currentApproverId: input.currentUser.Id,
+      status: RequestStatus.Pending,
+      currentApproverId: targetUser.Id,
       currentStep: currentStepOrder,
       currentStepName: stepInfo.step.Title,
       historyApproval: updatedHistoryApproval,
