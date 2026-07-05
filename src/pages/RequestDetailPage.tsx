@@ -168,6 +168,31 @@ export const RequestDetailPage: React.FC<IRequestDetailPageProps> = ({
     }
   };
 
+  const handleForward = async (reason?: string): Promise<void> => {
+    try {
+      setSubmittingAction(true);
+
+      await requestActionService.processAction({
+        requestId: request.Id,
+        action: WorkflowAction.Forwarded,
+        currentUser: {
+          Id: currentUser?.Id ?? currentUserId,
+          Title: currentUser?.Title,
+          EMail: currentUser?.EMail,
+        },
+        comment: reason,
+      });
+
+      alert("Chuyển bước thành công.");
+      await loadDetail();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      alert(`Chuyển bước thất bại: ${message}`);
+    } finally {
+      setSubmittingAction(false);
+    }
+  };
+
 const handleReassign = async (
   targetUser: IActionUser,
   reason?: string,
@@ -251,7 +276,9 @@ const handleReassign = async (
   onReject={(reason) => {
     void handleReject(reason);
   }}
-  onForward={() => alert("Chức năng chuyển bước đang được phát triển.")}
+  onForward={(reason) => {
+    void handleForward(reason);
+  }}
   onReassign={(targetUser, reason) => {
     void handleReassign(targetUser, reason);
   }}
