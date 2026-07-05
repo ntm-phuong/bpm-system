@@ -3,11 +3,13 @@ import { IRequestActionInput } from "../types/RequestActionType";
 import { ApproveActionHandler } from "./actions/ApproveActionHandler";
 import { RejectActionHandler } from "./actions/RejectActionHandler";
 import {ReassignActionHandler} from "./actions/ReassignActionHandler";
+import { ForwardActionHandler } from "./actions/ForwardActionHandler";
 
 export class RequestActionService {
   private _approveHandler = new ApproveActionHandler();
   private _rejectHandler = new RejectActionHandler();
   private _reassignHandler = new ReassignActionHandler();
+  private _forwardHandler = new ForwardActionHandler();
 
   async processAction(input: IRequestActionInput) {
     switch (input.action) {
@@ -21,7 +23,7 @@ export class RequestActionService {
         return this._reassignHandler.handle(input);
 
       case WorkflowAction.Forwarded:
-        throw new Error("Chưa implement Forward.");
+        return this._forwardHandler.handle(input);
 
       default:
         throw new Error(`Action không hợp lệ: ${input.action}`);
