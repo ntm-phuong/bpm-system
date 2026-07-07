@@ -2,80 +2,18 @@ import * as React from "react";
 import { useState } from "react";
 import { Icon } from "@fluentui/react";
 import { useApp } from "../../context/AppContext";
-import { useMenuItems } from "../../hooks/UseMenuItems";
+import { useSidebarNavigation } from "../../hooks/useSidebarNavigation";
+import { INavigationItem } from "../../types/MenuTypes";
 import styles from "./Sidebar.module.scss";
 
 const bpmLogoUrl: string = require("../../webparts/bpmSystem/assets/bpmLogo.png");
 
-export type SidebarPageKey =
-  | "home"
-  | "profile"
-  | "documents"
-  | "news"
-  | "allRequests"
-  | "myRequests"
-  | "pendingRequests"
-  | "processedRequests"
-  | `process-${number}`
-  | "requestDetail";
-
-
-interface INavigationItem {
-  key: SidebarPageKey;
-  label: string;
-}
-
-interface INavigationGroup {
-  key: string;
-  title: string;
-  iconName: string;
-  isStandalone?: boolean;
-  items: INavigationItem[];
-}
-
 export interface ISidebarProps {
-  selectedItemKey: SidebarPageKey;
-  onItemSelect: (itemKey: SidebarPageKey) => void;
+  selectedItemKey: string;
+  onItemSelect: (itemKey: string) => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
 }
-
-const navigationGroups: INavigationGroup[] = [
-  {
-    key: "home",
-    title: "TRANG CHU",
-    iconName: "Home",
-    isStandalone: true,
-    items: [],
-  },
-  {
-    key: "myInformation",
-    title: "THONG TIN CUA TOI",
-    iconName: "Contact",
-    items: [
-      { key: "profile", label: "Profile ca nhan" },
-      { key: "documents", label: "Van ban ban hanh" },
-      { key: "news", label: "Danh sach tin tuc" },
-    ],
-  },
-  {
-    key: "createProcess",
-    title: "TAO QUY TRINH",
-    iconName: "BulletedList",
-    items: [],
-  },
-  {
-    key: "statistical",
-    title: "THONG KE",
-    iconName: "BarChart",
-    items: [
-      { key: "allRequests", label: "Tất cả các phiếu" },
-      { key: "myRequests", label: "Phiếu đã tạo" },
-      { key: "pendingRequests", label: "Phiếu cần xử lý" },
-      { key: "processedRequests", label: "Phiếu đã xử lý" },
-    ],
-  },
-];
 
 export const Sidebar = ({
   selectedItemKey,
@@ -84,16 +22,25 @@ export const Sidebar = ({
   onToggleCollapse,
 }: ISidebarProps): JSX.Element => {
   const { setSelectedProcess, setIsLoading } = useApp();
-  const { menuItems, loading } = useMenuItems();
+  const { navigationGroups, loading } = useSidebarNavigation();
 
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
-    {
-      myInformation: true,
-      createProcess: true,
-	  statistical: true,
-
-    },
+    {},
   );
+
+  React.useEffect(() => {
+    setExpandedGroups((currentGroups) => {
+      const nextGroups: Record<string, boolean> = {};
+
+      navigationGroups.forEach((group) => {
+        if (group.items.length > 0) {
+          nextGroups[group.key] = currentGroups[group.key] ?? true;
+        }
+      });
+
+      return nextGroups;
+    });
+  }, [navigationGroups]);
 
   const handleToggleGroup = (groupKey: string): void => {
     setExpandedGroups((currentGroups) => ({
@@ -130,15 +77,10 @@ export const Sidebar = ({
 
       <nav className={styles.navigation}>
         {navigationGroups.map((group) => {
-          const processItems: INavigationItem[] =
-            group.key === "createProcess"
-              ? menuItems.map((process) => ({
-                  key: `process-${process.processId}`,
-                  label: process.title,
-                }))
-              : group.items;
+          const hasChildren = group.items.length > 0;
+          const processItems: INavigationItem[] = group.items;
 
-          const isExpanded = expandedGroups[group.key];
+          const isExpanded = !!expandedGroups[group.key];
 
           return (
             <section className={styles.group} key={group.key}>
@@ -146,15 +88,15 @@ export const Sidebar = ({
                 type="button"
                 className={styles.groupButton}
                 onClick={() => {
-                  if (group.isStandalone) {
-                    onItemSelect("home");
+                  if (!hasChildren) {
+                    onItemSelect(group.key);
                     setSelectedProcess(null, null);
                     return;
                   }
 
                   handleToggleGroup(group.key);
                 }}
-                aria-expanded={group.isStandalone ? undefined : isExpanded}
+                aria-expanded={hasChildren ? isExpanded : undefined}
                 title={group.title}
               >
                 <span className={styles.groupHeading}>
@@ -163,7 +105,7 @@ export const Sidebar = ({
                   </span>
                   <span className={styles.groupTitle}>{group.title}</span>
                 </span>
-                {!group.isStandalone && (
+                {hasChildren && (
                   <Icon
                     className={styles.toggleIcon}
                     iconName={isExpanded ? "ChevronDown" : "ChevronRight"}
@@ -171,7 +113,7 @@ export const Sidebar = ({
                 )}
               </button>
 
-              {isExpanded && !isCollapsed && !group.isStandalone && (
+              {isExpanded && !isCollapsed && hasChildren && (
                 <div className={styles.groupItems}>
                   {group.key === "createProcess" && loading && (
                     <span className={styles.groupEmpty}>
@@ -192,22 +134,13 @@ export const Sidebar = ({
                       className={`${styles.childItem} ${selectedItemKey === item.key ? styles.selectedItem : ""}`}
                       onClick={() => {
                         onItemSelect(item.key);
-                        if (group.key === "createProcess") {
-                          const processId = Number(
-                            item.key.replace("process-", ""),
-                          );
-                          const selectedMenuItem = menuItems.find(
-                            (process) => process.processId === processId,
-                          );
-                          if (Number.isNaN(processId) || !selectedMenuItem) {
+                        if (item.type === "Process") {
+                          if (!item.processId || !item.processCode) {
                             setSelectedProcess(null, null);
                             return;
                           }
 
-                          setSelectedProcess(
-                            processId,
-                            selectedMenuItem.processCode,
-                          );
+                          setSelectedProcess(item.processId, item.processCode);
                         } else {
                           setSelectedProcess(null, null);
                         }

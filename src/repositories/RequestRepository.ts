@@ -54,6 +54,15 @@ export interface IUpdateRequestInput {
   slaEndTime?: string;
 }
 
+export interface IUpdateRequestAdminInput {
+  id: number;
+  status?: RequestStatus;
+  currentStep?: number;
+  currentStepName?: string;
+  currentApproverId?: number | null;
+  isEmergency?: boolean;
+}
+
 const REQUEST_SELECT = [
   "Id",
   "Title",
@@ -172,6 +181,10 @@ export class RequestRepository extends BaseRepository {
     return this.getRequests({ top });
   }
 
+  getAllRequestsForAdmin(): Promise<IRequest[]> {
+    return this.getRequests({ top: 5000 });
+  }
+
   getMyRequests(currentUserId: number, top = 100): Promise<IRequest[]> {
     return this.getRequests({
       requesterId: currentUserId,
@@ -218,6 +231,24 @@ export class RequestRepository extends BaseRepository {
       .getByTitle(LISTS.REQUESTS)
       .items.getById(input.id)
       .update(payload);
+  }
+
+  async updateRequestAdmin(input: IUpdateRequestAdminInput): Promise<void> {
+    await this.updateRequest({
+      id: input.id,
+      status: input.status,
+      currentStep: input.currentStep,
+      currentStepName: input.currentStepName,
+      currentApproverId: input.currentApproverId,
+      isEmergency: input.isEmergency,
+    });
+  }
+
+  async deleteRequest(id: number): Promise<void> {
+    await this.sp.web.lists
+      .getByTitle(LISTS.REQUESTS)
+      .items.getById(id)
+      .delete();
   }
 
   async closeRequest(id: number, status: RequestStatus): Promise<void> {

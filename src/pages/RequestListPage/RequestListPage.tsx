@@ -1,10 +1,10 @@
 import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
-import { IRequest } from "../models";
-import { RequestStatus } from "../constants/enums";
-import { RequestRepository } from "../repositories/RequestRepository";
-import { RequestQueryService } from "../services/RequestQueryService";
-import styles from "./RequestListPage.module.scss";
+import { IRequest } from "../../models";
+import { RequestStatus } from "../../constants/enums";
+import { RequestRepository } from "../../repositories/RequestRepository";
+import { RequestQueryService } from "../../services/RequestQueryService";
+import styles from "../RequestListPage.module.scss";
 
 type RequestListType =
   | "allRequests"
