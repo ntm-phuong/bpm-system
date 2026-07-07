@@ -3,12 +3,13 @@ import { useState } from "react";
 import { ThemeProvider, PartialTheme, createTheme } from "@fluentui/react";
 import { AppProvider, useApp } from "../../../context/AppContext";
 import { MainLayout } from "../../../layouts/MainLayout";
-import { Sidebar, SidebarPageKey } from "../../../components/Sidebar/Sidebar";
+import { Sidebar } from "../../../components/Sidebar/Sidebar";
 import { IBpmSystemProps } from "./IBpmSystemProps";
 import styles from "./BpmSystem.module.scss";
-import { RequestListPage } from "../../../pages/RequestListPage";
+import { RequestListPage } from "../../../pages/RequestListPage/RequestListPage";
 import { WorkflowProcess } from "../../../pages/WorkflowProcessPage";
 import { RequestDetailPage } from "../../../pages/RequestDetailPage";
+import { AdminRequestPage } from "../../../pages/AdminPage/AdminRequestPage";
 
 const myTheme: PartialTheme = createTheme({});
 
@@ -17,7 +18,7 @@ const BpmRouter: React.FC<{ context: IBpmSystemProps["context"] }> = ({
 }) => {
   const { selectedProcessId, setCurrentUser } = useApp();
 
-  const [selectedPage, setSelectedPage] = useState<SidebarPageKey>("home");
+  const [selectedPage, setSelectedPage] = useState<string>("home");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
 
   const currentUserId = context.pageContext.legacyPageContext.userId;
@@ -53,6 +54,19 @@ const BpmRouter: React.FC<{ context: IBpmSystemProps["context"] }> = ({
         <RequestListPage
           type="allRequests"
           currentUserId={currentUserId}
+          onOpenDetail={(requestId) => {
+            setSelectedRequestId(requestId);
+            setSelectedPage("requestDetail");
+          }}
+        />
+      );
+    }
+
+    if (selectedPage === "adminRequests") {
+      return (
+        <AdminRequestPage
+          currentUserId={currentUserId}
+          context={context}
           onOpenDetail={(requestId) => {
             setSelectedRequestId(requestId);
             setSelectedPage("requestDetail");
