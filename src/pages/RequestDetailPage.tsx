@@ -19,7 +19,6 @@ import { IPerson } from "../models";
 import { WebPartContext } from "@microsoft/sp-webpart-base";
 import { UserService as SiteUsersService } from "../services/UserService";
 
-
 const requestRepository = new RequestRepository();
 const leaveRepository = new LeaveRepository();
 const requestActionService = new RequestActionService();
@@ -49,7 +48,10 @@ export const RequestDetailPage: React.FC<IRequestDetailPageProps> = ({
   const { formConfig, loading, error } = useProcessForm(processId ?? undefined);
   const [reassignUsers, setReassignUsers] = useState<IPerson[]>([]);
   const [searchingUsers, setSearchingUsers] = useState(false);
-  const siteUsersService = React.useMemo(() => new SiteUsersService(context), [context]);
+  const siteUsersService = React.useMemo(
+    () => new SiteUsersService(context),
+    [context],
+  );
   React.useEffect(() => {
     void loadDetail();
   }, [requestId]);
@@ -76,6 +78,8 @@ export const RequestDetailPage: React.FC<IRequestDetailPageProps> = ({
       );
 
       setAbsence(absenceData);
+      console.log("absenceData:", absenceData);
+      console.log("absenceData.AbsenceDates:", absenceData.AbsenceDates);
 
       setFormData({
         ...absenceData,
@@ -98,25 +102,25 @@ export const RequestDetailPage: React.FC<IRequestDetailPageProps> = ({
   };
 
   const handleSearchUsers = async (keyword: string): Promise<void> => {
-  try {
-    const term = keyword.trim();
+    try {
+      const term = keyword.trim();
 
-    if (!term) {
+      if (!term) {
+        setReassignUsers([]);
+        return;
+      }
+
+      setSearchingUsers(true);
+
+      const users = await siteUsersService.searchUser(term);
+      setReassignUsers(users);
+    } catch (error) {
+      console.error("Tìm kiếm người dùng thất bại:", error);
       setReassignUsers([]);
-      return;
+    } finally {
+      setSearchingUsers(false);
     }
-
-    setSearchingUsers(true);
-
-    const users = await siteUsersService.searchUser(term);
-    setReassignUsers(users);
-  } catch (error) {
-    console.error("Tìm kiếm người dùng thất bại:", error);
-    setReassignUsers([]);
-  } finally {
-    setSearchingUsers(false);
-  }
-};
+  };
 
   const handleApprove = async (reason?: string): Promise<void> => {
     try {
@@ -193,34 +197,34 @@ export const RequestDetailPage: React.FC<IRequestDetailPageProps> = ({
     }
   };
 
-const handleReassign = async (
-  targetUser: IActionUser,
-  reason?: string,
-): Promise<void> => {
-  try {
-    setSubmittingAction(true);
+  const handleReassign = async (
+    targetUser: IActionUser,
+    reason?: string,
+  ): Promise<void> => {
+    try {
+      setSubmittingAction(true);
 
-    await requestActionService.processAction({
-      requestId: request.Id,
-      action: WorkflowAction.Reassigned,
-      currentUser: {
-        Id: currentUser?.Id ?? currentUserId,
-        Title: currentUser?.Title,
-        EMail: currentUser?.EMail,
-      },
-      targetUser,
-      comment: reason,
-    });
+      await requestActionService.processAction({
+        requestId: request.Id,
+        action: WorkflowAction.Reassigned,
+        currentUser: {
+          Id: currentUser?.Id ?? currentUserId,
+          Title: currentUser?.Title,
+          EMail: currentUser?.EMail,
+        },
+        targetUser,
+        comment: reason,
+      });
 
-    alert("Giao lại phiếu thành công.");
-    await loadDetail();
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    alert(`Giao lại phiếu thất bại: ${message}`);
-  } finally {
-    setSubmittingAction(false);
-  }
-};
+      alert("Giao lại phiếu thành công.");
+      await loadDetail();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      alert(`Giao lại phiếu thất bại: ${message}`);
+    } finally {
+      setSubmittingAction(false);
+    }
+  };
 
   if (loadingDetail || loading) {
     return <div style={{ padding: 20 }}>Đang tải chi tiết phiếu...</div>;
@@ -263,26 +267,26 @@ const handleReassign = async (
         isReadOnly={true}
       />
       <RequestActions
-  canProcess={canProcess}
-  submitting={submittingAction}
-  reassignUsers={reassignUsers}
-  searchingUsers={searchingUsers}
-  onSearchUsers={(keyword) => {
-    void handleSearchUsers(keyword);
-  }}
-  onApprove={(reason) => {
-    void handleApprove(reason);
-  }}
-  onReject={(reason) => {
-    void handleReject(reason);
-  }}
-  onForward={(reason) => {
-    void handleForward(reason);
-  }}
-  onReassign={(targetUser, reason) => {
-    void handleReassign(targetUser, reason);
-  }}
-/>
+        canProcess={canProcess}
+        submitting={submittingAction}
+        reassignUsers={reassignUsers}
+        searchingUsers={searchingUsers}
+        onSearchUsers={(keyword) => {
+          void handleSearchUsers(keyword);
+        }}
+        onApprove={(reason) => {
+          void handleApprove(reason);
+        }}
+        onReject={(reason) => {
+          void handleReject(reason);
+        }}
+        onForward={(reason) => {
+          void handleForward(reason);
+        }}
+        onReassign={(targetUser, reason) => {
+          void handleReassign(targetUser, reason);
+        }}
+      />
       <RequestGeneralInfo
         requesterName={request.Requester?.Title}
         approverName={request.CurrentApprover?.Title}

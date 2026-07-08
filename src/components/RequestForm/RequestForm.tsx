@@ -1,10 +1,10 @@
-import * as React from 'react';
-import { useState } from 'react';
-import { Icon } from '@fluentui/react';
-import { FieldType } from '../../constants/enums';
-import { IFieldConfig } from '../../models';
-import { IFormConfig } from '../../services/ProcessService';
-import styles from './RequestForm.module.scss';
+import * as React from "react";
+import { useState } from "react";
+import { Icon } from "@fluentui/react";
+import { FieldType } from "../../constants/enums";
+import { IFieldConfig } from "../../models";
+import { IFormConfig } from "../../services/ProcessService";
+import styles from "./RequestForm.module.scss";
 
 export interface IRequestFormProps {
   formConfig: IFormConfig;
@@ -33,24 +33,36 @@ const parseFieldOptions = (fieldOptions: string): string[] => {
   return [];
 };
 
-export const RequestForm: React.FC<IRequestFormProps> = ({ formConfig, formData, onFieldChange, isReadOnly }) => {
+export const RequestForm: React.FC<IRequestFormProps> = ({
+  formConfig,
+  formData,
+  onFieldChange,
+  isReadOnly,
+}) => {
   // State để quản lý việc mở rộng / thu gọn form
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
-  const [fieldValues, setFieldValues] = useState<Record<string, string | number | boolean>>({});
+  const [fieldValues, setFieldValues] = useState<
+    Record<string, string | number | boolean>
+  >({});
   console.log(fieldValues);
   React.useEffect(() => {
     setFieldValues({});
   }, [formConfig.process.Id]);
 
   const fields = React.useMemo(() => {
-    const sortedSteps = [...formConfig.steps].sort((a, b) => a.StepOrder - b.StepOrder);
+    const sortedSteps = [...formConfig.steps].sort(
+      (a, b) => a.StepOrder - b.StepOrder,
+    );
     const activeStepId = sortedSteps[0]?.Id;
 
     if (!activeStepId) {
       return formConfig.commonFieldConfigs;
     }
 
-    return formConfig.fieldConfigsByStep[activeStepId] || formConfig.commonFieldConfigs;
+    return (
+      formConfig.fieldConfigsByStep[activeStepId] ||
+      formConfig.commonFieldConfigs
+    );
   }, [formConfig]);
 
   const toggleForm = () => {
@@ -62,6 +74,10 @@ export const RequestForm: React.FC<IRequestFormProps> = ({ formConfig, formData,
     const fieldReadOnly = isReadOnly || !field.IsEditable;
     const inputId = field.FieldInternalName;
 
+    console.log("Field:", field.FieldInternalName);
+    console.log("FormData:", formData);
+    console.log("Value:", formData[field.FieldInternalName]);
+
     switch (field.FieldType) {
       case FieldType.MultiLine:
         return (
@@ -69,8 +85,10 @@ export const RequestForm: React.FC<IRequestFormProps> = ({ formConfig, formData,
             id={inputId}
             className={styles.inputControl}
             rows={4}
-            value={typeof value === 'string' ? value : ''}
-            onChange={(event) => onFieldChange(field.FieldInternalName, event.target.value)}
+            value={typeof value === "string" ? value : ""}
+            onChange={(event) =>
+              onFieldChange(field.FieldInternalName, event.target.value)
+            }
             disabled={fieldReadOnly}
           />
         );
@@ -80,25 +98,36 @@ export const RequestForm: React.FC<IRequestFormProps> = ({ formConfig, formData,
             id={inputId}
             type="number"
             className={styles.inputControl}
-            value={typeof value === 'number' ? String(value) : ''}
+            value={typeof value === "number" ? String(value) : ""}
             onChange={(event) => {
               const rawValue = event.target.value;
-              onFieldChange(field.FieldInternalName, rawValue === '' ? '' : Number(rawValue));
+              onFieldChange(
+                field.FieldInternalName,
+                rawValue === "" ? "" : Number(rawValue),
+              );
             }}
             disabled={fieldReadOnly}
           />
         );
-      case FieldType.DateTime:
+      case FieldType.DateTime: {
+        const dateValue =
+          typeof value === "string" && value.length >= 10
+            ? value.slice(0, 10)
+            : "";
+
         return (
           <input
             id={inputId}
-            type="datetime-local"
+            type="date"
             className={styles.inputControl}
-            value={typeof value === 'string' ? value : ''}
-            onChange={(event) => onFieldChange(field.FieldInternalName, event.target.value)}
+            value={dateValue}
+            onChange={(event) =>
+              onFieldChange(field.FieldInternalName, event.target.value)
+            }
             disabled={fieldReadOnly}
           />
         );
+      }
       case FieldType.Choice:
       case FieldType.Dropdown: {
         const options = parseFieldOptions(field.FieldOptions);
@@ -106,8 +135,10 @@ export const RequestForm: React.FC<IRequestFormProps> = ({ formConfig, formData,
           <select
             id={inputId}
             className={styles.inputControl}
-            value={typeof value === 'string' ? value : ''}
-            onChange={(event) => onFieldChange(field.FieldInternalName, event.target.value)}
+            value={typeof value === "string" ? value : ""}
+            onChange={(event) =>
+              onFieldChange(field.FieldInternalName, event.target.value)
+            }
             disabled={fieldReadOnly}
           >
             <option value="">--Lựa chọn--</option>
@@ -124,8 +155,13 @@ export const RequestForm: React.FC<IRequestFormProps> = ({ formConfig, formData,
           <select
             id={inputId}
             className={styles.inputControl}
-            value={typeof value === 'boolean' ? String(value) : ''}
-            onChange={(event) => onFieldChange(field.FieldInternalName, event.target.value === 'true')}
+            value={typeof value === "boolean" ? String(value) : ""}
+            onChange={(event) =>
+              onFieldChange(
+                field.FieldInternalName,
+                event.target.value === "true",
+              )
+            }
             disabled={fieldReadOnly}
           >
             <option value="">--Lựa chọn--</option>
@@ -139,9 +175,11 @@ export const RequestForm: React.FC<IRequestFormProps> = ({ formConfig, formData,
             id={inputId}
             type="text"
             className={styles.inputControl}
-            value={typeof value === 'string' ? value : ''}
+            value={typeof value === "string" ? value : ""}
             placeholder="Tìm kiếm người dùng"
-            onChange={(event) => onFieldChange(field.FieldInternalName, event.target.value)}
+            onChange={(event) =>
+              onFieldChange(field.FieldInternalName, event.target.value)
+            }
             disabled={fieldReadOnly}
           />
         );
@@ -152,8 +190,10 @@ export const RequestForm: React.FC<IRequestFormProps> = ({ formConfig, formData,
             id={inputId}
             type="text"
             className={styles.inputControl}
-            value={typeof value === 'string' ? value : ''}
-            onChange={(event) => onFieldChange(field.FieldInternalName, event.target.value)}
+            value={typeof value === "string" ? value : ""}
+            onChange={(event) =>
+              onFieldChange(field.FieldInternalName, event.target.value)
+            }
             disabled={fieldReadOnly}
           />
         );
