@@ -11,6 +11,10 @@ export class UserService {
     this._sp = spfi().using(SPFx(context));
   }
 
+  async searchUsers(keyword: string, limit = 20): Promise<IPerson[]> {
+    return this.searchUser(keyword, limit);
+  }
+
   async searchUser(keyword: string, limit = 20): Promise<IPerson[]> {
     const term = keyword.trim().toLowerCase();
 
