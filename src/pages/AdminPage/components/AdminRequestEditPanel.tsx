@@ -21,14 +21,10 @@ export const AdminRequestEditPanel: React.FC<IAdminRequestEditPanelProps> = ({
 }) => {
   return (
     <section className={styles.editPanel}>
-      <h3>Sửa request #{editForm.id}</h3>
-      <p className={styles.editDesc}>
-        Người thao tác: #{currentUserId}. Chỉ cập nhật các trường an toàn.
-      </p>
 
       <div className={styles.editGrid}>
         <div className={styles.controlGroup}>
-          <label htmlFor="edit-status">Status</label>
+          <label htmlFor="edit-status">Trạng thái</label>
           <select
             id="edit-status"
             value={editForm.status}
@@ -48,7 +44,7 @@ export const AdminRequestEditPanel: React.FC<IAdminRequestEditPanelProps> = ({
         </div>
 
         <div className={styles.controlGroup}>
-          <label htmlFor="edit-current-step">CurrentStep</label>
+          <label htmlFor="edit-current-step">Bước hiện tại</label>
           <input
             id="edit-current-step"
             type="number"
@@ -64,7 +60,7 @@ export const AdminRequestEditPanel: React.FC<IAdminRequestEditPanelProps> = ({
         </div>
 
         <div className={styles.controlGroup}>
-          <label htmlFor="edit-current-step-name">CurrentStepName</label>
+          <label htmlFor="edit-current-step-name">Tên bước hiện tại</label>
           <input
             id="edit-current-step-name"
             type="text"
@@ -79,7 +75,7 @@ export const AdminRequestEditPanel: React.FC<IAdminRequestEditPanelProps> = ({
         </div>
 
         <div className={styles.controlGroup}>
-          <label htmlFor="edit-emergency">IsEmergency</label>
+          <label htmlFor="edit-emergency">Khẩn cấp</label>
           <select
             id="edit-emergency"
             value={editForm.isEmergency ? "true" : "false"}
@@ -97,7 +93,7 @@ export const AdminRequestEditPanel: React.FC<IAdminRequestEditPanelProps> = ({
       </div>
 
       <div className={styles.approverPanel}>
-        <h4>CurrentApproverId (Person field)</h4>
+        <h4>Thay đổi người xử lý</h4>
 
         <div className={styles.controlGroup}>
           <label htmlFor="edit-approver-search">Tìm người xử lý</label>
@@ -110,7 +106,7 @@ export const AdminRequestEditPanel: React.FC<IAdminRequestEditPanelProps> = ({
           />
         </div>
 
-        {searchingApprover && <div className={styles.feedback}>Đang tìm người dùng...</div>}
+        {searchingApprover && <div className={styles.feedback}></div>}
 
         {!searchingApprover && approverCandidates.length > 0 && (
           <div className={styles.userList}>
@@ -153,9 +149,7 @@ export const AdminRequestEditPanel: React.FC<IAdminRequestEditPanelProps> = ({
         </button>
       </div>
 
-      <p className={styles.lockedHint}>
-        Trường không cho sửa trực tiếp: AbsenceIDId, HistoryApproval, Requester, Created.
-      </p>
+    
     </section>
   );
 };
