@@ -1,7 +1,7 @@
 import * as React from "react";
-import { REQUEST_STATUS_OPTIONS } from "../constants/adminRequestConstants";
-import { IAdminRequestToolbarProps } from "../types/AdminRequestTypes";
-import styles from "../AdminRequestPage.module.scss";
+import { REQUEST_STATUS_OPTIONS } from "../../constants/adminRequestConstants";
+import { IAdminRequestToolbarProps } from "../../types/AdminRequestTypes";
+import styles from "../../AdminRequestPage.module.scss";
 
 export const AdminRequestToolbar: React.FC<IAdminRequestToolbarProps> = ({
   keyword,

@@ -17,6 +17,7 @@ import { ProcessEditorPanel } from "./components/Processes/ProcessEditorPanel";
 import { StepEditorPanel } from "./components/Processes/StepEditorPanel";
 import styles from "./AdminProcessConfigPage.module.scss";
 import { UserService } from "../../services/UserService";
+import { ProcessAction } from "./components/Processes/ProcessAction";
 
 const adminProcessConfigService = new AdminProcessConfigService();
 const adminProcessService = new AdminProcessService();
@@ -278,28 +279,12 @@ export const AdminProcessConfigPage: React.FC<IAdminProcessConfigPageProps> = ({
         </p>
       </section>
 
-      <section className={styles.panel}>
-        <h3>Process Actions</h3>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button type="button" onClick={handleCreateProcess}>
-            Thêm quy trình
-          </button>
-          <button type="button" onClick={handleEditProcess} disabled={!config}>
-            Sửa quy trình
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              handleDeactivateProcess().catch((e) => {
-                console.error("Không thể tắt quy trình:", e);
-              });
-            }}
-            disabled={!config || !config.process.IsActive}
-          >
-            Tắt quy trình
-          </button>
-        </div>
-      </section>
+      <ProcessAction
+        process={config?.process}
+        onCreate={handleCreateProcess}
+        onEdit={handleEditProcess}
+        onDeactivate={handleDeactivateProcess}
+      />
 
       <ProcessEditorPanel
         isOpen={showProcessPanel}

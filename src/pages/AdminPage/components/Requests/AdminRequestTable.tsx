@@ -1,7 +1,7 @@
 import * as React from "react";
 import { IconButton } from "@fluentui/react";
-import { IAdminRequestTableProps } from "../types/AdminRequestTypes";
-import styles from "../AdminRequestPage.module.scss";
+import { IAdminRequestTableProps } from "../../types/AdminRequestTypes";
+import styles from "../../AdminRequestPage.module.scss";
 
 export const AdminRequestTable: React.FC<IAdminRequestTableProps> = ({
   items,

@@ -10,8 +10,8 @@ import {
 import { UserService as SiteUsersService } from "../../services/UserService";
 import { AdminRequestEditPanel } from "./components/Requests/AdminRequestEditPanel";
 import { AdminRequestStats } from "./components/Requests/AdminRequestStats";
-import { AdminRequestTable } from "./components/AdminRequestTable";
-import { AdminRequestToolbar } from "./components/AdminRequestToolbar";
+import { AdminRequestTable } from "./components/Requests/AdminRequestTable";
+import { AdminRequestToolbar } from "./components/Requests/AdminRequestToolbar";
 import { IAdminEditForm, IAdminStats } from "./types/AdminRequestTypes";
 import styles from "./AdminRequestPage.module.scss";
 
