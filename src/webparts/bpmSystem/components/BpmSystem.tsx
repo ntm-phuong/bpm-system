@@ -10,6 +10,7 @@ import { RequestListPage } from "../../../pages/RequestListPage/RequestListPage"
 import { WorkflowProcess } from "../../../pages/WorkflowProcessPage";
 import { RequestDetailPage } from "../../../pages/RequestDetailPage";
 import { AdminRequestPage } from "../../../pages/AdminPage/AdminRequestPage";
+import { AdminProcessConfigPage } from "../../../pages/AdminPage/AdminProcessConfigPage";
 
 const myTheme: PartialTheme = createTheme({});
 
@@ -114,6 +115,9 @@ const BpmRouter: React.FC<{ context: IBpmSystemProps["context"] }> = ({
       );
     }
 
+    if (selectedPage === "adminProcessConfig") {
+      return <AdminProcessConfigPage context={context} />;
+    }
     if (selectedPage === "home") {
       return (
         <div style={{ padding: "40px", textAlign: "center", color: "#605e5c" }}>
