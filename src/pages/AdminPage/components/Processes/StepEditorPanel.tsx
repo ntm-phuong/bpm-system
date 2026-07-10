@@ -1,12 +1,12 @@
 import * as React from "react";
-import { IProcessStep } from "../../../models";
+import { IProcessStep } from "../../../../models";
 import {
   ICreateProcessStepInput,
   IUpdateProcessStepInput,
-} from "../types/AdminProcessConfigTypes";
-import styles from "../AdminProcessConfigPage.module.scss";
-import { PersonPicker } from "../../../components/PersonPicker/PersonPicker";
-import { IPerson } from "../../../models";
+} from "../../types/AdminProcessConfigTypes";
+import styles from "../../AdminProcessConfigPage.module.scss";
+import { PersonPicker } from "../../../../components/PersonPicker/PersonPicker";
+import { IPerson } from "../../../../models";
 
 interface IStepEditorPanelProps {
   isOpen: boolean;

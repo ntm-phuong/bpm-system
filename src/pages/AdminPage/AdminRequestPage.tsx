@@ -8,8 +8,8 @@ import {
   IUpdateRequestAdminInput,
 } from "../../repositories/RequestRepository";
 import { UserService as SiteUsersService } from "../../services/UserService";
-import { AdminRequestEditPanel } from "./components/AdminRequestEditPanel";
-import { AdminRequestStats } from "./components/AdminRequestStats";
+import { AdminRequestEditPanel } from "./components/Requests/AdminRequestEditPanel";
+import { AdminRequestStats } from "./components/Requests/AdminRequestStats";
 import { AdminRequestTable } from "./components/AdminRequestTable";
 import { AdminRequestToolbar } from "./components/AdminRequestToolbar";
 import { IAdminEditForm, IAdminStats } from "./types/AdminRequestTypes";

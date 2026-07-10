@@ -1,6 +1,6 @@
 import * as React from "react";
-import { IAdminRequestStatsProps } from "../types/AdminRequestTypes";
-import styles from "../AdminRequestPage.module.scss";
+import { IAdminRequestStatsProps } from "../../types/AdminRequestTypes";
+import styles from "../../AdminRequestPage.module.scss";
 
 export const AdminRequestStats: React.FC<IAdminRequestStatsProps> = ({ stats }) => {
   return (

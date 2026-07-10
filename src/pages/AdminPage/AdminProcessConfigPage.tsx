@@ -13,8 +13,8 @@ import {
   IUpdateProcessInput,
   IUpdateProcessStepInput,
 } from "./types/AdminProcessConfigTypes";
-import { ProcessEditorPanel } from "./components/ProcessEditorPanel";
-import { StepEditorPanel } from "./components/StepEditorPanel";
+import { ProcessEditorPanel } from "./components/Processes/ProcessEditorPanel";
+import { StepEditorPanel } from "./components/Processes/StepEditorPanel";
 import styles from "./AdminProcessConfigPage.module.scss";
 import { UserService } from "../../services/UserService";
 

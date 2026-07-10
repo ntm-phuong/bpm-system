@@ -1,8 +1,8 @@
 import * as React from "react";
-import { RequestStatus } from "../../../constants/enums";
-import { REQUEST_STATUS_OPTIONS } from "../constants/adminRequestConstants";
-import { IAdminRequestEditPanelProps } from "../types/AdminRequestTypes";
-import styles from "../AdminRequestPage.module.scss";
+import { RequestStatus } from "../../../../constants/enums";
+import { REQUEST_STATUS_OPTIONS } from "../../constants/adminRequestConstants";
+import { IAdminRequestEditPanelProps } from "../../types/AdminRequestTypes";
+import styles from "../../AdminRequestPage.module.scss";
 
 export const AdminRequestEditPanel: React.FC<IAdminRequestEditPanelProps> = ({
   editForm,

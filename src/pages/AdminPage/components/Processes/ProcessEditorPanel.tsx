@@ -1,10 +1,10 @@
 import * as React from "react";
-import { IProcess } from "../../../models";
+import { IProcess } from "../../../../models";
 import {
   ICreateProcessInput,
   IUpdateProcessInput,
-} from "../types/AdminProcessConfigTypes";
-import styles from "../AdminProcessConfigPage.module.scss";
+} from "../../types/AdminProcessConfigTypes";
+import styles from "../../AdminProcessConfigPage.module.scss";
 
 interface IProcessEditorPanelProps {
   isOpen: boolean;
