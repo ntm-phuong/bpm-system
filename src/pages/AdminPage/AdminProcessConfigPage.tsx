@@ -1,6 +1,6 @@
 import * as React from "react";
 import { WebPartContext } from "@microsoft/sp-webpart-base";
-import { IFieldConfig, IProcess, IProcessStep, IPerson } from "../../models";
+import {  IProcess, IProcessStep, IPerson } from "../../models";
 import {
   AdminProcessConfigService,
   IAdminProcessConfig,
@@ -18,22 +18,15 @@ import { StepEditorPanel } from "./components/Processes/StepEditorPanel";
 import styles from "./AdminProcessConfigPage.module.scss";
 import { UserService } from "../../services/UserService";
 import { ProcessAction } from "./components/Processes/ProcessAction";
+import { ProcessSelector } from "./components/Processes/ProcessSelector";
+import { ProcessSummary } from "./components/Processes/ProcessSummary";
+import { ProcessStepsTable } from "./components/Processes/ProcessStepsTable";
+import { FieldConfigsTable } from "./components/Processes/FieldConfigsTable";
 
 const adminProcessConfigService = new AdminProcessConfigService();
 const adminProcessService = new AdminProcessService();
 const adminProcessStepService = new AdminProcessStepService();
 
-const displayValue = (value: unknown): string => {
-  if (value === null || value === undefined || value === "") {
-    return "-";
-  }
-
-  if (typeof value === "boolean") {
-    return value ? "Yes" : "No";
-  }
-
-  return String(value);
-};
 
 interface IAdminProcessConfigPageProps {
   context: WebPartContext;
@@ -122,18 +115,12 @@ export const AdminProcessConfigPage: React.FC<IAdminProcessConfigPageProps> = ({
     });
   }, [selectedProcessId, loadProcessConfig]);
 
-  const handleProcessChange = (
-    event: React.ChangeEvent<HTMLSelectElement>,
-  ): void => {
-    const rawValue = event.target.value;
+  const handleProcessChange = (processId?: number): void => {
+    setSelectedProcessId(processId);
 
-    if (!rawValue) {
-      setSelectedProcessId(undefined);
+    if (!processId) {
       setConfig(undefined);
-      return;
     }
-
-    setSelectedProcessId(Number(rawValue));
   };
 
   const handleCreateProcess = (): void => {
@@ -314,28 +301,12 @@ export const AdminProcessConfigPage: React.FC<IAdminProcessConfigPageProps> = ({
         onCancel={() => setShowStepPanel(false)}
       />
 
-      <section className={styles.panel}>
-        <h3>Process Selector</h3>
-        <div className={styles.selectorRow}>
-          <label htmlFor="process-selector">Chọn quy trình</label>
-          <select
-            id="process-selector"
-            value={selectedProcessId ?? ""}
-            onChange={handleProcessChange}
-            disabled={loadingProcesses}
-          >
-            <option value="">-- Chọn quy trình --</option>
-            {processes.map((process) => (
-              <option key={process.Id} value={process.Id}>
-                {process.Title}
-              </option>
-            ))}
-          </select>
-        </div>
-        {loadingProcesses && (
-          <div className={styles.info}>Đang tải danh sách quy trình...</div>
-        )}
-      </section>
+      <ProcessSelector
+        processes={processes}
+        selectedProcessId={selectedProcessId}
+        loading={loadingProcesses}
+        onChange={handleProcessChange}
+      />
 
       {error && (
         <section className={styles.panel}>
@@ -351,147 +322,15 @@ export const AdminProcessConfigPage: React.FC<IAdminProcessConfigPageProps> = ({
 
       {config && (
         <>
-          <section className={styles.panel}>
-            <h3>Process Summary</h3>
-            <div className={styles.summaryGrid}>
-              <div>
-                <strong>Title:</strong> {displayValue(config.process.Title)}
-              </div>
-              <div>
-                <strong>Process Code:</strong>{" "}
-                {displayValue(config.process.ProcessCode)}
-              </div>
-              <div>
-                <strong>Description:</strong>{" "}
-                {displayValue(config.process.Description)}
-              </div>
-              <div>
-                <strong>Is Active:</strong>{" "}
-                {displayValue(config.process.IsActive)}
-              </div>
-            </div>
-          </section>
-
-          <section className={styles.panel}>
-            <h3>Steps Table</h3>
-            <div className={styles.toolbar}>
-              <button
-                type="button"
-                className={styles.toolbarButton}
-                onClick={handleCreateStep}
-                disabled={!selectedProcessId}
-              >
-                Thêm bước
-              </button>
-            </div>
-            <div className={styles.tableWrapper}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>StepOrder</th>
-                    <th>Title</th>
-                    <th>StepApprover.Title</th>
-                    <th>StepApprover.EMail</th>
-                    <th>SLA_Hours</th>
-                    <th>BeforeSLA</th>
-                    <th>IsActive</th>
-                    <th>Hành động</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {config.steps.length === 0 && (
-                    <tr>
-                      <td colSpan={8} className={styles.emptyRow}>
-                        Không có dữ liệu bước.
-                      </td>
-                    </tr>
-                  )}
-                  {config.steps.map((step: IProcessStep) => (
-                    <tr key={step.Id}>
-                      <td>{displayValue(step.StepOrder)}</td>
-                      <td>{displayValue(step.Title)}</td>
-                      <td>{displayValue(step.StepApprover?.Title)}</td>
-                      <td>{displayValue(step.StepApprover?.EMail)}</td>
-                      <td>{displayValue(step.SLA_Hours)}</td>
-                      <td>{displayValue(step.BeforeSLA)}</td>
-                      <td>{displayValue(step.IsActive)}</td>
-                      <td>
-                        <div className={styles.toolbar}>
-                          <button
-                            type="button"
-                            className={styles.toolbarButton}
-                            onClick={() => handleEditStep(step)}
-                          >
-                            Sửa
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.dangerButton}
-                            onClick={() => {
-                              handleDeactivateStep(step).catch((e) => {
-                                console.error("Không thể tắt bước:", e);
-                              });
-                            }}
-                            disabled={!step.IsActive}
-                          >
-                            Tắt
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <section className={styles.panel}>
-            <h3>Field Configs Table</h3>
-            <div className={styles.tableWrapper}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Title</th>
-                    <th>FieldInternalName</th>
-                    <th>FieldDisplayName</th>
-                    <th>FieldType</th>
-                    <th>StepIDId</th>
-                    <th>IsRequired</th>
-                    <th>IsVisible</th>
-                    <th>IsEditable</th>
-                    <th>ComponentType</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {config.fieldConfigs.length === 0 && (
-                    <tr>
-                      <td colSpan={9} className={styles.emptyRow}>
-                        Không có dữ liệu cấu hình trường.
-                      </td>
-                    </tr>
-                  )}
-                  {config.fieldConfigs.map((fieldConfig: IFieldConfig) => (
-                    <tr key={fieldConfig.Id}>
-                      <td>{displayValue(fieldConfig.Title)}</td>
-                      <td>{displayValue(fieldConfig.FieldInternalName)}</td>
-                      <td>{displayValue(fieldConfig.FieldDisplayName)}</td>
-                      <td>{displayValue(fieldConfig.FieldType)}</td>
-                      <td>
-                        {fieldConfig.StepIDId === undefined ||
-                        fieldConfig.StepIDId === null
-                          ? "Common"
-                          : displayValue(fieldConfig.StepIDId)}
-                      </td>
-                      <td>{displayValue(fieldConfig.IsRequired)}</td>
-                      <td>{displayValue(fieldConfig.IsVisible)}</td>
-                      <td>{displayValue(fieldConfig.IsEditable)}</td>
-                      <td>{displayValue(fieldConfig.ComponentType)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+          <ProcessSummary process={config.process} />
+          <ProcessStepsTable
+            steps={config.steps}
+            canCreateStep={selectedProcessId !== undefined}
+            onCreateStep={handleCreateStep}
+            onEditStep={handleEditStep}
+            onDeactivateStep={handleDeactivateStep}
+          />
+          <FieldConfigsTable fieldConfigs={config.fieldConfigs} />
         </>
       )}
     </div>
