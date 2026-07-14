@@ -42,7 +42,7 @@ export interface ICreateFieldConfigInput {
   fieldInternalName: string;
   fieldDisplayName: string;
   fieldType: FieldType;
-  fieldOptions?: string;
+  fieldOptions?: string[];
   isRequired: boolean;
   isVisible: boolean;
   isEditable: boolean;
@@ -55,7 +55,7 @@ export interface IUpdateFieldConfigInput {
   fieldInternalName?: string;
   fieldDisplayName?: string;
   fieldType?: FieldType;
-  fieldOptions?: string;
+  fieldOptions?: string[];
   isRequired?: boolean;
   isVisible?: boolean;
   isEditable?: boolean;

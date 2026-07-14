@@ -13,7 +13,7 @@ export interface IRequestFormProps {
   isReadOnly?: boolean;
 }
 
-const parseFieldOptions = (fieldOptions: string): string[] => {
+const parseFieldOptions = (fieldOptions?: string): string[] => {
   if (!fieldOptions) {
     return [];
   }

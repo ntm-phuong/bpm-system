@@ -58,7 +58,6 @@ export const FieldConfigsTable: React.FC<IFieldConfigsTableProps> = ({
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>Title</th>
               <th>FieldInternalName</th>
               <th>FieldDisplayName</th>
               <th>FieldType</th>
@@ -81,7 +80,6 @@ export const FieldConfigsTable: React.FC<IFieldConfigsTableProps> = ({
             ) : (
               fieldConfigs.map((fieldConfig) => (
                 <tr key={fieldConfig.Id}>
-                  <td>{displayValue(fieldConfig.Title)}</td>
 
                   <td>{displayValue(fieldConfig.FieldInternalName)}</td>
 

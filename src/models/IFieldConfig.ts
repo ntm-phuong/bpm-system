@@ -10,7 +10,7 @@ export interface IFieldConfig {
   FieldInternalName: string;
   FieldDisplayName: string;
   FieldType: FieldType;
-  FieldOptions: string; // JSON string for options (e.g., for dropdowns)
+  FieldOptions?: string; // Stored as JSON string from SharePoint for dropdown options
   IsRequired: boolean;
   IsVisible: boolean;
   IsEditable: boolean;
