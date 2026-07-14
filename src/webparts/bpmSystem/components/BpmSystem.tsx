@@ -9,7 +9,7 @@ import styles from "./BpmSystem.module.scss";
 import { RequestListPage } from "../../../pages/RequestListPage/RequestListPage";
 import { WorkflowProcess } from "../../../pages/WorkflowProcessPage";
 import { RequestDetailPage } from "../../../pages/RequestDetailPage";
-import { AdminRequestPage } from "../../../pages/AdminPage/AdminRequestPage";
+import { AdminRequestPage } from "../../../pages/AdminPage/pages/AdminRequestPage/AdminRequestPage";
 import { AdminProcessConfigPage } from "../../../pages/AdminPage/AdminProcessConfigPage";
 
 const myTheme: PartialTheme = createTheme({});

@@ -23,10 +23,10 @@ export class AdminFieldConfigService {
 		this._validateId(input.processId, "processId");
 		this._validateOptionalPositiveId(input.stepId, "stepId");
 
-		const title = input.title?.trim();
-		if (!title) {
-			throw new Error("Tiêu đề cấu hình trường là bắt buộc.");
-		}
+		// const title = input.title?.trim();
+		// if (!title) {
+		// 	throw new Error("Tiêu đề cấu hình trường là bắt buộc.");
+		// }
 
 		const fieldInternalName = input.fieldInternalName?.trim();
 		if (!fieldInternalName) {
@@ -59,7 +59,7 @@ export class AdminFieldConfigService {
 				normalizedStepId === null || normalizedStepId === undefined
 					? undefined
 					: normalizedStepId,
-			title,
+			// title,
 			componentType:
 				input.componentType !== undefined ? input.componentType.trim() : undefined,
 			fieldInternalName,
@@ -92,13 +92,13 @@ export class AdminFieldConfigService {
 			normalizedInput.stepId = this._normalizeStepId(input.stepId);
 		}
 
-		if (input.title !== undefined) {
-			const title = input.title.trim();
-			if (!title) {
-				throw new Error("Tiêu đề cấu hình trường không được để trống.");
-			}
-			normalizedInput.title = title;
-		}
+		// if (input.title !== undefined) {
+		// 	const title = input.title.trim();
+		// 	if (!title) {
+		// 		throw new Error("Tiêu đề cấu hình trường không được để trống.");
+		// 	}
+		// 	normalizedInput.title = title;
+		// }
 
 		if (input.componentType !== undefined) {
 			normalizedInput.componentType = input.componentType.trim();

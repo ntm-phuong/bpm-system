@@ -55,7 +55,7 @@ export class AdminFieldConfigRepository extends BaseRepository {
   ): Promise<IFieldConfig> {
     try {
       const payload: Record<string, unknown> = {
-        Title: input.title,
+        // Title: input.title,
         ProcessIDId: input.processId,
         FieldInternalName: input.fieldInternalName,
         FieldDisplayName: input.fieldDisplayName,
@@ -103,9 +103,9 @@ export class AdminFieldConfigRepository extends BaseRepository {
         payload.StepIDId = input.stepId;
       }
 
-      if (input.title !== undefined) {
-        payload.Title = input.title;
-      }
+      // if (input.title !== undefined) {
+      //   payload.Title = input.title;
+      // }
 
       if (input.componentType !== undefined) {
         payload.ComponentType = input.componentType;
