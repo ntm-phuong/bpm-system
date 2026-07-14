@@ -38,7 +38,6 @@ export interface IUpdateProcessStepInput {
 export interface ICreateFieldConfigInput {
   processId: number;
   stepId?: number;
-  title: string;
   componentType?: string;
   fieldInternalName: string;
   fieldDisplayName: string;
@@ -52,7 +51,6 @@ export interface ICreateFieldConfigInput {
 export interface IUpdateFieldConfigInput {
   id: number;
   stepId?: number | null;
-  title?: string;
   componentType?: string;
   fieldInternalName?: string;
   fieldDisplayName?: string;

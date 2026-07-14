@@ -224,6 +224,25 @@
   color: #a4262c;
 }
 
+.panelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  h3 {
+    margin: 0;
+  }
+}
+
+.actionButtons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
 @media (max-width: 768px) {
   .summaryGrid {
     grid-template-columns: 1fr;
@@ -231,5 +250,77 @@
 
   .formGrid {
     grid-template-columns: 1fr;
+  }
+}
+
+//SCSS NEW 
+.dashboardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  h3 {
+    margin: 0;
+  }
+}
+
+.panelDescription {
+  margin: 6px 0 0;
+  color: #605e5c;
+}
+
+.titleLink {
+  border: none;
+  padding: 0;
+  background: transparent;
+  color: #0078d4;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.actionButtons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.activeStatus,
+.inactiveStatus {
+  display: inline-flex;
+  border-radius: 12px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.activeStatus {
+  background: #dff6dd;
+  color: #107c10;
+}
+
+.inactiveStatus {
+  background: #f3f2f1;
+  color: #605e5c;
+}
+
+@media (max-width: 700px) {
+  .dashboardHeader {
+    flex-direction: column;
   }
 }

@@ -1,19 +1,19 @@
 import * as React from "react";
 import { IconButton, Modal } from "@fluentui/react";
 import { WebPartContext } from "@microsoft/sp-webpart-base";
-import { IPerson, IRequest } from "../../models";
-import { RequestStatus } from "../../constants/enums";
+import { IPerson, IRequest } from "../../../../models";
+import { RequestStatus } from "../../../../constants/enums";
 import {
   RequestRepository,
   IUpdateRequestAdminInput,
-} from "../../repositories/RequestRepository";
-import { UserService as SiteUsersService } from "../../services/UserService";
-import { AdminRequestEditPanel } from "./components/Requests/AdminRequestEditPanel";
-import { AdminRequestStats } from "./components/Requests/AdminRequestStats";
-import { AdminRequestTable } from "./components/Requests/AdminRequestTable";
-import { AdminRequestToolbar } from "./components/Requests/AdminRequestToolbar";
-import { IAdminEditForm, IAdminStats } from "./types/AdminRequestTypes";
-import styles from "./AdminRequestPage.module.scss";
+} from "../../../../repositories/RequestRepository";
+import { UserService as SiteUsersService } from "../../../../services/UserService";
+import { AdminRequestEditPanel } from "../../components/Requests/AdminRequestEditPanel";
+import { AdminRequestStats } from "../../components/Requests/AdminRequestStats";
+import { AdminRequestTable } from "../../components/Requests/AdminRequestTable";
+import { AdminRequestToolbar } from "../../components/Requests/AdminRequestToolbar";
+import { IAdminEditForm, IAdminStats } from "../../types/AdminRequestTypes";
+import styles from "../../AdminRequestPage.module.scss";
 
 interface IAdminRequestPageProps {
   currentUserId: number;
