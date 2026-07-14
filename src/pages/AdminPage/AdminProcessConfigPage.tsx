@@ -17,9 +17,6 @@ import { ProcessDashboardTable } from "./components/Processes/ProcessDashboardTa
 
 const adminProcessConfigService = new AdminProcessConfigService();
 const adminProcessService = new AdminProcessService();
-// const adminProcessStepService = new AdminProcessStepService();
-// const adminFieldConfigService = new AdminFieldConfigService();
-
 interface IAdminProcessConfigPageProps {
   context: WebPartContext;
 }
@@ -57,31 +54,11 @@ export const AdminProcessConfigPage: React.FC<IAdminProcessConfigPageProps> = ({
     }
   }, []);
 
-  
-  // const handleSearchUsers = React.useCallback(
-  //   async (keyword: string): Promise<IPerson[]> => {
-  //     return userService.searchUsers(keyword);
-  //   },
-  //   [userService],
-  // );
-
   React.useEffect(() => {
     loadProcesses().catch((e) => {
       console.error("Không thể tải danh sách quy trình:", e);
     });
   }, [loadProcesses]);
-
-  // React.useEffect(() => {
-  //   if (!selectedProcessId) {
-  //     setConfig(undefined);
-  //     return;
-  //   }
-
-  //   loadProcessConfig(selectedProcessId).catch((e) => {
-  //     console.error("Không thể tải cấu hình quy trình:", e);
-  //   });
-  // }, [selectedProcessId, loadProcessConfig]);
-
  
   //PROCESS
   const handleCreateProcess = (): void => {
@@ -145,10 +122,6 @@ export const AdminProcessConfigPage: React.FC<IAdminProcessConfigPageProps> = ({
   const handleOpenProcessDetail = (processId: number): void => {
     setDetailProcessId(processId);
   };
-  //STEP
-  
-  //fIELD CONFIG
-  
 
   if (detailProcessId !== undefined) {
     return (

@@ -1,0 +1,169 @@
+.dropdownOptionsEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+  border: 1px solid #edebe9;
+  border-radius: 6px;
+  padding: 16px;
+  background: #faf9f8;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  margin: 0;
+  color: #323130;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.description {
+  margin: 0;
+  color: #605e5c;
+  font-size: 13px;
+}
+
+.required {
+  color: #d13438;
+}
+
+.optionInputRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+
+  input {
+    flex: 1;
+    min-width: 0;
+    height: 36px;
+    box-sizing: border-box;
+    border: 1px solid #8a8886;
+    border-radius: 4px;
+    padding: 0 12px;
+    font: inherit;
+
+    &:focus {
+      border-color: #0078d4;
+      outline: 1px solid #0078d4;
+    }
+  }
+}
+
+.addButton {
+  min-width: 90px;
+  height: 36px;
+  border: none;
+  border-radius: 4px;
+  background: #0078d4;
+  color: #fff;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #106ebe;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.optionList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.optionItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #edebe9;
+  border-radius: 4px;
+  padding: 8px 12px;
+  background: #fff;
+}
+
+.optionOrder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #edebe9;
+  color: #323130;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.optionLabel {
+  flex: 1;
+  word-break: break-word;
+}
+
+.optionActions {
+  display: flex;
+  gap: 6px;
+}
+
+.iconButton {
+  min-width: 32px;
+  height: 32px;
+  border: 1px solid #c8c6c4;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #f3f2f1;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.removeButton {
+  min-width: 60px;
+  height: 32px;
+  border: 1px solid #d13438;
+  border-radius: 4px;
+  background: #fff;
+  color: #d13438;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #fde7e9;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.empty {
+  border: 1px dashed #c8c6c4;
+  border-radius: 4px;
+  padding: 18px;
+  color: #605e5c;
+  text-align: center;
+}
+
+.error {
+  color: #d13438;
+  font-size: 13px;
+}
+
+.helpText {
+  color: #605e5c;
+  font-size: 12px;
+}

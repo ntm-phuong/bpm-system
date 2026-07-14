@@ -6,6 +6,7 @@ import {
   IUpdateFieldConfigInput,
 } from "../../types/AdminProcessConfigTypes";
 import styles from "./FieldConfigEditorPanel.module.scss";
+import { DropdownOptionsEditor } from "./DropdownOptionEditor";
 
 interface IFieldConfigEditorPanelProps {
   isOpen: boolean;
@@ -13,9 +14,7 @@ interface IFieldConfigEditorPanelProps {
   fieldConfig?: IFieldConfig;
   steps: IProcessStep[];
   saving: boolean;
-  onSave: (
-    input: ICreateFieldConfigInput | IUpdateFieldConfigInput,
-  ) => void;
+  onSave: (input: ICreateFieldConfigInput | IUpdateFieldConfigInput) => void;
   onCancel: () => void;
 }
 
@@ -28,13 +27,14 @@ interface IFieldConfigFormState {
   isVisible: boolean;
   isEditable: boolean;
   componentType: string;
+  fieldOptions: string[];
 }
 
 interface IFieldConfigFormErrors {
   fieldInternalName?: string;
   fieldDisplayName?: string;
   fieldType?: string;
-  processId?: string;
+  fieldOptions?: string;
 }
 
 const FIELD_TYPE_OPTIONS: Array<{
@@ -87,20 +87,44 @@ const createInitialFormState = (
     isVisible: fieldConfig?.IsVisible ?? true,
     isEditable: fieldConfig?.IsEditable ?? true,
     componentType: fieldConfig?.ComponentType ?? "",
+    fieldOptions: parseFieldOptions(fieldConfig?.FieldOptions),
   };
 };
 
-const normalizeOptionalText = (
-  value: string,
-): string | undefined => {
+const normalizeOptionalText = (value: string): string | undefined => {
   const normalizedValue = value.trim();
 
   return normalizedValue || undefined;
 };
+const parseFieldOptions = (value?: string | string[]): string[] => {
+  if (!value) {
+    return [];
+  }
 
-export const FieldConfigEditorPanel: React.FC<
-  IFieldConfigEditorPanelProps
-> = ({
+  if (Array.isArray(value)) {
+    return value.map((option) => option.trim()).filter(Boolean);
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(value);
+
+    if (Array.isArray(parsed)) {
+      return parsed
+        .filter((option): option is string => typeof option === "string")
+        .map((option) => option.trim())
+        .filter(Boolean);
+    }
+  } catch {
+    return value
+      .split(/\r?\n|,/)
+      .map((option) => option.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+};
+
+export const FieldConfigEditorPanel: React.FC<IFieldConfigEditorPanelProps> = ({
   isOpen,
   processId,
   fieldConfig,
@@ -113,8 +137,9 @@ export const FieldConfigEditorPanel: React.FC<
     createInitialFormState(fieldConfig),
   );
 
-  const [errors, setErrors] =
-    React.useState<IFieldConfigFormErrors>({});
+  const [newOption, setNewOption] = React.useState<string>("");
+
+  const [errors, setErrors] = React.useState<IFieldConfigFormErrors>({});
 
   const isEditMode = fieldConfig !== undefined;
 
@@ -124,6 +149,7 @@ export const FieldConfigEditorPanel: React.FC<
     }
 
     setForm(createInitialFormState(fieldConfig));
+    setNewOption("");
     setErrors({});
   }, [isOpen, fieldConfig]);
 
@@ -142,43 +168,95 @@ export const FieldConfigEditorPanel: React.FC<
     }));
   };
 
+  // const supportsOptions = (fieldType: FieldType): boolean =>
+  //   fieldType === FieldType.Dropdown || fieldType === FieldType.Choice;
+
+  const handleAddOption = (): void => {
+    const normalizedOption = newOption.trim();
+
+    if (!normalizedOption) {
+      return;
+    }
+
+    const optionExists = form.fieldOptions.some(
+      (option) =>
+        option.toLocaleLowerCase() === normalizedOption.toLocaleLowerCase(),
+    );
+
+    if (optionExists) {
+      setErrors((previousErrors) => ({
+        ...previousErrors,
+        fieldOptions: "Lựa chọn này đã tồn tại.",
+      }));
+
+      return;
+    }
+
+    setForm((previousForm) => ({
+      ...previousForm,
+      fieldOptions: [...previousForm.fieldOptions, normalizedOption],
+    }));
+
+    setNewOption("");
+
+    setErrors((previousErrors) => ({
+      ...previousErrors,
+      fieldOptions: undefined,
+    }));
+  };
+
+  const handleRemoveOption = (optionIndex: number): void => {
+    setForm((previousForm) => ({
+      ...previousForm,
+      fieldOptions: previousForm.fieldOptions.filter(
+        (_, index) => index !== optionIndex,
+      ),
+    }));
+  };
+
+  const handleOptionKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+  ): void => {
+    if (event.key !== "Enter") {
+      return;
+    }
+
+    event.preventDefault();
+    handleAddOption();
+  };
+
   const validateForm = (): boolean => {
     const validationErrors: IFieldConfigFormErrors = {};
 
-    // if (!processId) {
-    //   validationErrors.processId = "Không xác định được quy trình.";
-    // }
-
-    // if (!form.title.trim()) {
-    //   validationErrors.title = "Vui lòng nhập Title.";
-    // }
-
     if (!form.fieldInternalName.trim()) {
-      validationErrors.fieldInternalName =
-        "Vui lòng nhập tên trường nội bộ.";
+      validationErrors.fieldInternalName = "Vui lòng nhập tên trường nội bộ.";
     }
 
     if (!form.fieldDisplayName.trim()) {
-      validationErrors.fieldDisplayName =
-        "Vui lòng nhập tên hiển thị.";
+      validationErrors.fieldDisplayName = "Vui lòng nhập tên hiển thị.";
     }
 
     if (
       form.fieldInternalName.trim() &&
-      !/^[A-Za-z][A-Za-z0-9_]*$/.test(
-        form.fieldInternalName.trim(),
-      )
+      !/^[A-Za-z][A-Za-z0-9_]*$/.test(form.fieldInternalName.trim())
     ) {
       validationErrors.fieldInternalName =
         "FieldInternalName phải bắt đầu bằng chữ và chỉ gồm chữ, số hoặc dấu gạch dưới.";
     }
 
-    if (
-      form.fieldType === undefined ||
-      form.fieldType === null
-    ) {
-      validationErrors.fieldType =
-        "Vui lòng chọn kiểu trường.";
+    if (form.fieldType === undefined || form.fieldType === null) {
+      validationErrors.fieldType = "Vui lòng chọn kiểu trường.";
+    }
+
+    if (form.fieldType === FieldType.Dropdown) {
+      const normalizedFieldOptions = form.fieldOptions
+        .map((option) => option.trim())
+        .filter(Boolean);
+
+      if (normalizedFieldOptions.length === 0) {
+        validationErrors.fieldOptions =
+          "Vui lòng thêm ít nhất một lựa chọn cho Dropdown.";
+      }
     }
 
     setErrors(validationErrors);
@@ -186,21 +264,24 @@ export const FieldConfigEditorPanel: React.FC<
     return Object.keys(validationErrors).length === 0;
   };
 
-  const handleSubmit = (
-    event: React.FormEvent<HTMLFormElement>,
-  ): void => {
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
 
     if (!validateForm()) {
       return;
     }
 
+    const normalizedFieldOptions = form.fieldOptions
+      .map((option) => option.trim())
+      .filter(Boolean);
+
     const commonInput: ICreateFieldConfigInput = {
       processId,
-      // title: form.title.trim(),
       fieldInternalName: form.fieldInternalName.trim(),
       fieldDisplayName: form.fieldDisplayName.trim(),
       fieldType: form.fieldType,
+      fieldOptions:
+        form.fieldType === FieldType.Dropdown ? normalizedFieldOptions : undefined,
       stepId: form.stepId,
       isRequired: form.isRequired,
       isVisible: form.isVisible,
@@ -213,6 +294,13 @@ export const FieldConfigEditorPanel: React.FC<
         ...commonInput,
         id: fieldConfig.Id,
       };
+
+      if (
+        fieldConfig.FieldType === FieldType.Dropdown &&
+        form.fieldType !== FieldType.Dropdown
+      ) {
+        updateInput.fieldOptions = [];
+      }
 
       onSave(updateInput);
       return;
@@ -236,9 +324,7 @@ export const FieldConfigEditorPanel: React.FC<
         <div className={styles.editorHeader}>
           <div>
             <h3 id="field-config-editor-title">
-              {isEditMode
-                ? "Sửa cấu hình trường"
-                : "Thêm cấu hình trường"}
+              {isEditMode ? "Sửa cấu hình trường" : "Thêm cấu hình trường"}
             </h3>
 
             <p className={styles.editorDescription}>
@@ -257,22 +343,11 @@ export const FieldConfigEditorPanel: React.FC<
           </button>
         </div>
 
-        <form
-          className={styles.editorForm}
-          onSubmit={handleSubmit}
-        >
-          {errors.processId && (
-            <div className={styles.fieldError}>
-              {errors.processId}
-            </div>
-          )}
-
+        <form className={styles.editorForm} onSubmit={handleSubmit}>
           <div className={styles.formGrid}>
-
             <div className={styles.controlGroup}>
               <label htmlFor="field-config-display-name">
-                FieldDisplayName{" "}
-                <span className={styles.required}>*</span>
+                FieldDisplayName <span className={styles.required}>*</span>
               </label>
 
               <input
@@ -280,10 +355,7 @@ export const FieldConfigEditorPanel: React.FC<
                 type="text"
                 value={form.fieldDisplayName}
                 onChange={(event) =>
-                  handleChange(
-                    "fieldDisplayName",
-                    event.target.value,
-                  )
+                  handleChange("fieldDisplayName", event.target.value)
                 }
                 disabled={saving}
               />
@@ -297,8 +369,7 @@ export const FieldConfigEditorPanel: React.FC<
 
             <div className={styles.controlGroup}>
               <label htmlFor="field-config-internal-name">
-                FieldInternalName{" "}
-                <span className={styles.required}>*</span>
+                FieldInternalName <span className={styles.required}>*</span>
               </label>
 
               <input
@@ -306,18 +377,14 @@ export const FieldConfigEditorPanel: React.FC<
                 type="text"
                 value={form.fieldInternalName}
                 onChange={(event) =>
-                  handleChange(
-                    "fieldInternalName",
-                    event.target.value,
-                  )
+                  handleChange("fieldInternalName", event.target.value)
                 }
                 disabled={saving || isEditMode}
               />
 
               {isEditMode && (
                 <span className={styles.helpText}>
-                  Không nên thay đổi tên nội bộ sau khi trường đã được
-                  sử dụng.
+                  Không nên thay đổi tên nội bộ sau khi trường đã được sử dụng.
                 </span>
               )}
 
@@ -330,18 +397,14 @@ export const FieldConfigEditorPanel: React.FC<
 
             <div className={styles.controlGroup}>
               <label htmlFor="field-config-type">
-                FieldType{" "}
-                <span className={styles.required}>*</span>
+                FieldType <span className={styles.required}>*</span>
               </label>
 
               <select
                 id="field-config-type"
                 value={String(form.fieldType)}
                 onChange={(event) =>
-                  handleChange(
-                    "fieldType",
-                    event.target.value as FieldType,
-                  )
+                  handleChange("fieldType", event.target.value as FieldType)
                 }
                 disabled={saving}
               >
@@ -356,75 +419,75 @@ export const FieldConfigEditorPanel: React.FC<
               </select>
 
               {errors.fieldType && (
-                <span className={styles.fieldError}>
-                  {errors.fieldType}
-                </span>
+                <span className={styles.fieldError}>{errors.fieldType}</span>
               )}
             </div>
 
             <div className={styles.controlGroup}>
-              <label htmlFor="field-config-step">
-                Step
-              </label>
+              <label htmlFor="field-config-step">Step</label>
 
               <select
                 id="field-config-step"
-                value={
-                  form.stepId === undefined
-                    ? ""
-                    : String(form.stepId)
-                }
+                value={form.stepId === undefined ? "" : String(form.stepId)}
                 onChange={(event) => {
                   const selectedValue = event.target.value;
 
                   handleChange(
                     "stepId",
-                    selectedValue
-                      ? Number(selectedValue)
-                      : undefined,
+                    selectedValue ? Number(selectedValue) : undefined,
                   );
                 }}
                 disabled={saving}
               >
-                <option value="">
-                  Common – hiển thị chung
-                </option>
+                <option value="">Hiển thị chung</option>
 
                 {steps.map((step) => (
-                  <option
-                    key={step.Id}
-                    value={String(step.Id)}
-                  >
+                  <option key={step.Id} value={String(step.Id)}>
                     Bước {step.StepOrder} – {step.Title}
                   </option>
                 ))}
               </select>
 
               <span className={styles.helpText}>
-                Chọn Common nếu trường không thuộc riêng một bước.
+                Chọn "Hiển thị chung" nếu trường không thuộc riêng một bước.
               </span>
             </div>
 
             <div className={styles.controlGroup}>
-              <label htmlFor="field-config-component-type">
-                ComponentType
-              </label>
+              <label htmlFor="field-config-component-type">ComponentType</label>
 
               <input
                 id="field-config-component-type"
                 type="text"
                 value={form.componentType}
                 onChange={(event) =>
-                  handleChange(
-                    "componentType",
-                    event.target.value,
-                  )
+                  handleChange("componentType", event.target.value)
                 }
                 placeholder="Ví dụ: TextField, PersonPicker"
                 disabled={saving}
               />
             </div>
           </div>
+
+          {form.fieldType === FieldType.Dropdown && (
+            <DropdownOptionsEditor
+              options={form.fieldOptions}
+              newOption={newOption}
+              saving={saving}
+              error={errors.fieldOptions}
+              onChangeNewOption={(value) => {
+                setNewOption(value);
+
+                setErrors((previousErrors) => ({
+                  ...previousErrors,
+                  fieldOptions: undefined,
+                }));
+              }}
+              onAddOption={handleAddOption}
+              onRemoveOption={handleRemoveOption}
+              onOptionKeyDown={handleOptionKeyDown}
+            />
+          )}
 
           <fieldset className={styles.checkboxGroup}>
             <legend>Quyền hiển thị và chỉnh sửa</legend>
@@ -434,10 +497,7 @@ export const FieldConfigEditorPanel: React.FC<
                 type="checkbox"
                 checked={form.isRequired}
                 onChange={(event) =>
-                  handleChange(
-                    "isRequired",
-                    event.target.checked,
-                  )
+                  handleChange("isRequired", event.target.checked)
                 }
                 disabled={saving}
               />
@@ -450,10 +510,7 @@ export const FieldConfigEditorPanel: React.FC<
                 type="checkbox"
                 checked={form.isVisible}
                 onChange={(event) =>
-                  handleChange(
-                    "isVisible",
-                    event.target.checked,
-                  )
+                  handleChange("isVisible", event.target.checked)
                 }
                 disabled={saving}
               />
@@ -466,10 +523,7 @@ export const FieldConfigEditorPanel: React.FC<
                 type="checkbox"
                 checked={form.isEditable}
                 onChange={(event) =>
-                  handleChange(
-                    "isEditable",
-                    event.target.checked,
-                  )
+                  handleChange("isEditable", event.target.checked)
                 }
                 disabled={saving}
               />

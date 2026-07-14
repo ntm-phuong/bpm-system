@@ -60,6 +60,10 @@ export class AdminFieldConfigRepository extends BaseRepository {
         FieldInternalName: input.fieldInternalName,
         FieldDisplayName: input.fieldDisplayName,
         FieldType: input.fieldType,
+        FieldOptions:
+          input.fieldOptions && input.fieldOptions.length > 0
+            ? JSON.stringify(input.fieldOptions)
+            : null,
         IsRequired: input.isRequired,
         IsVisible: input.isVisible,
         IsEditable: input.isEditable,
@@ -71,10 +75,6 @@ export class AdminFieldConfigRepository extends BaseRepository {
 
       if (input.componentType !== undefined) {
         payload.ComponentType = input.componentType;
-      }
-
-      if (input.fieldOptions !== undefined) {
-        payload.FieldOptions = input.fieldOptions;
       }
 
       const result = await this.sp.web.lists
@@ -124,7 +124,10 @@ export class AdminFieldConfigRepository extends BaseRepository {
       }
 
       if (input.fieldOptions !== undefined) {
-        payload.FieldOptions = input.fieldOptions;
+        payload.FieldOptions =
+          input.fieldOptions.length > 0
+            ? JSON.stringify(input.fieldOptions)
+            : null;
       }
 
       if (input.isRequired !== undefined) {
@@ -176,6 +179,6 @@ export class AdminFieldConfigRepository extends BaseRepository {
     IsRequired: raw["IsRequired"] as boolean,
     IsVisible: raw["IsVisible"] as boolean,
     IsEditable: raw["IsEditable"] as boolean,
-    FieldOptions: (raw["FieldOptions"] as string) || "",
+    FieldOptions: (raw["FieldOptions"] as string | undefined) ?? undefined,
   });
 }
