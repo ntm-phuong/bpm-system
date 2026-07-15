@@ -1,5 +1,4 @@
 import * as React from "react";
-import { Stack } from "@fluentui/react";
 import styles from "./MainLayout.module.scss";
 
 export interface IMainLayoutProps {
@@ -8,22 +7,26 @@ export interface IMainLayoutProps {
   isSidebarCollapsed?: boolean;
 }
 
-export const MainLayout = ({
+export const MainLayout: React.FC<IMainLayoutProps> = ({
   sidebar,
   children,
   isSidebarCollapsed = false,
-}: IMainLayoutProps): JSX.Element => {
+}) => {
   return (
-    <Stack horizontal className={styles.layout}>
-      <aside
-        className={`${styles.sidebarWrapper} ${isSidebarCollapsed ? styles.sidebarCollapsed : ""}`}
-        role="navigation"
-        aria-label="BPM Navigation"
-      >
-        <div className="bg-red-400 p-5">{sidebar}</div>
-      </aside>
+    <div
+      className={`${styles.layout} ${
+        isSidebarCollapsed
+          ? styles.layoutSidebarCollapsed
+          : ""
+      }`}
+    >
+      <div className={styles.sidebarWrapper}>
+        {sidebar}
+      </div>
 
-      <main className={styles.contentWrapper}>{children}</main>
-    </Stack>
+      <main className={styles.contentWrapper}>
+        {children}
+      </main>
+    </div>
   );
 };
