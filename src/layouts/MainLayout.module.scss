@@ -60,31 +60,24 @@
     display: block;
   }
 
-  .sidebarWrapper {
-    position: sticky;
-    top: 0;
-    z-index: 220;
+  .sidebarWrapper,
+  .layoutSidebarCollapsed .sidebarWrapper {
+    position: relative;
+    top: auto;
+    z-index: auto;
 
     flex: none;
+    flex-basis: auto;
 
     width: 100%;
     min-width: 0;
     min-height: auto;
-    box-sizing:border-box;
+    box-sizing: border-box;
 
     border-right: none;
     border-bottom: 1px solid #edebe9;
 
     overflow: visible;
-  }
-
-  .layoutSidebarCollapsed {
-    .sidebarWrapper {
-      flex-basis: auto;
-
-      width: 100%;
-      min-width: 0;
-    }
   }
 
   .contentWrapper {
