@@ -1,26 +1,31 @@
 import * as React from "react";
 import { IProcessStep } from "../../../../models";
-import styles from "../../AdminProcessConfigPage.module.scss";
-
-const displayValue = (value: unknown): string => {
-  if (value === null || value === undefined || value === "") {
-    return "-";
-  }
-
-  if (typeof value === "boolean") {
-    return value ? "Yes" : "No";
-  }
-
-  return String(value);
-};
+import styles from "./ProcessStepTable.module.scss";
 
 interface IProcessStepsTableProps {
   steps: IProcessStep[];
   canCreateStep: boolean;
   onCreateStep: () => void;
   onEditStep: (step: IProcessStep) => void;
-  onDeactivateStep: (step: IProcessStep) => Promise<void>;
+  onDeactivateStep: (
+    step: IProcessStep,
+  ) => Promise<void>;
 }
+
+const displayValue = (
+  value: unknown,
+  fallback = "-",
+): string => {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return fallback;
+  }
+
+  return String(value);
+};
 
 export const ProcessStepsTable: React.FC<
   IProcessStepsTableProps
@@ -31,14 +36,31 @@ export const ProcessStepsTable: React.FC<
   onEditStep,
   onDeactivateStep,
 }) => {
+  const sortedSteps = React.useMemo(
+    () =>
+      [...steps].sort(
+        (firstStep, secondStep) =>
+          firstStep.StepOrder -
+          secondStep.StepOrder,
+      ),
+    [steps],
+  );
+
   return (
     <section className={styles.panel}>
-      <h3>Steps Table</h3>
+      <div className={styles.panelHeader}>
+        <div>
+          <h3>Luồng xử lý quy trình</h3>
 
-      <div className={styles.toolbar}>
+          <p className={styles.description}>
+            Các bước được thực hiện theo thứ tự từ trái
+            sang phải.
+          </p>
+        </div>
+
         <button
           type="button"
-          className={styles.toolbarButton}
+          className={styles.createButton}
           onClick={onCreateStep}
           disabled={!canCreateStep}
         >
@@ -46,82 +68,162 @@ export const ProcessStepsTable: React.FC<
         </button>
       </div>
 
-      <div className={styles.tableWrapper}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>StepOrder</th>
-              <th>Title</th>
-              <th>StepApprover.Title</th>
-              <th>StepApprover.EMail</th>
-              <th>SLA_Hours</th>
-              <th>BeforeSLA</th>
-              <th>IsActive</th>
-              <th>Hành động</th>
-            </tr>
-          </thead>
+      {sortedSteps.length === 0 ? (
+        <div className={styles.emptyState}>
+          <div className={styles.emptyTitle}>
+            Quy trình chưa có bước xử lý
+          </div>
 
-          <tbody>
-            {steps.length === 0 && (
-              <tr>
-                <td colSpan={8} className={styles.emptyRow}>
-                  Không có dữ liệu bước.
-                </td>
-              </tr>
-            )}
+          <div className={styles.emptyDescription}>
+            Hãy thêm bước đầu tiên để bắt đầu cấu hình
+            luồng duyệt.
+          </div>
 
-            {steps.map((step) => (
-              <tr key={step.Id}>
-                <td>{displayValue(step.StepOrder)}</td>
+          <button
+            type="button"
+            className={styles.createButton}
+            onClick={onCreateStep}
+            disabled={!canCreateStep}
+          >
+            Thêm bước đầu tiên
+          </button>
+        </div>
+      ) : (
+        <div className={styles.flowWrapper}>
+          <div className={styles.flow}>
+            {sortedSteps.map((step, index) => {
+              const isLastStep =
+                index === sortedSteps.length - 1;
 
-                <td>{displayValue(step.Title)}</td>
+              return (
+                <React.Fragment key={step.Id}>
+                  <article
+                    className={`${styles.stepCard} ${
+                      step.IsActive
+                        ? styles.activeStep
+                        : styles.inactiveStep
+                    }`}
+                  >
+                    <div className={styles.stepHeader}>
+                      <span className={styles.stepNumber}>
+                        {step.StepOrder}
+                      </span>
 
-                <td>
-                  {displayValue(step.StepApprover?.Title)}
-                </td>
+                      <span
+                        className={`${styles.statusBadge} ${
+                          step.IsActive
+                            ? styles.activeStatus
+                            : styles.inactiveStatus
+                        }`}
+                      >
+                        {step.IsActive
+                          ? "Đang hoạt động"
+                          : "Đã tắt"}
+                      </span>
+                    </div>
 
-                <td>
-                  {displayValue(step.StepApprover?.EMail)}
-                </td>
+                    <h4 className={styles.stepTitle}>
+                      {displayValue(
+                        step.Title,
+                        "Chưa đặt tên",
+                      )}
+                    </h4>
 
-                <td>{displayValue(step.SLA_Hours)}</td>
+                    <dl className={styles.stepDetails}>
+                      <div className={styles.detailRow}>
+                        <dt>Người duyệt</dt>
+                        <dd>
+                          {displayValue(
+                            step.StepApprover?.Title,
+                            "Chưa cấu hình",
+                          )}
+                        </dd>
+                      </div>
 
-                <td>{displayValue(step.BeforeSLA)}</td>
+                      <div className={styles.detailRow}>
+                        <dt>Email</dt>
+                        <dd>
+                          {displayValue(
+                            step.StepApprover?.EMail,
+                          )}
+                        </dd>
+                      </div>
 
-                <td>{displayValue(step.IsActive)}</td>
+                      <div className={styles.detailRow}>
+                        <dt>SLA</dt>
+                        <dd>
+                          {step.SLA_Hours !== undefined &&
+                          step.SLA_Hours !== null
+                            ? `${step.SLA_Hours} giờ`
+                            : "-"}
+                        </dd>
+                      </div>
 
-                <td>
-                  <div className={styles.toolbar}>
-                    <button
-                      type="button"
-                      className={styles.toolbarButton}
-                      onClick={() => onEditStep(step)}
+                      <div className={styles.detailRow}>
+                        <dt>Cảnh báo trước</dt>
+                        <dd>
+                          {step.BeforeSLA !== undefined &&
+                          step.BeforeSLA !== null
+                            ? `${step.BeforeSLA} giờ`
+                            : "-"}
+                        </dd>
+                      </div>
+                    </dl>
+
+                    <div className={styles.stepActions}>
+                      <button
+                        type="button"
+                        className={styles.editButton}
+                        onClick={() => onEditStep(step)}
+                      >
+                        Sửa
+                      </button>
+
+                      <button
+                        type="button"
+                        className={styles.deactivateButton}
+                        onClick={() => {
+                          void onDeactivateStep(
+                            step,
+                          ).catch((error) => {
+                            console.error(
+                              "Không thể tắt bước:",
+                              error,
+                            );
+                          });
+                        }}
+                        disabled={!step.IsActive}
+                      >
+                        Tắt
+                      </button>
+                    </div>
+                  </article>
+
+                  {!isLastStep && (
+                    <div
+                      className={styles.connector}
+                      aria-hidden="true"
                     >
-                      Sửa
-                    </button>
+                      {/* <span className={styles.connectorLine} /> */}
+                      <span className={styles.connectorArrow}>
+                        →
+                      </span>
+                    </div>
+                  )}
+                </React.Fragment>
+              );
+            })}
 
-                    <button
-                      type="button"
-                      className={styles.dangerButton}
-                      onClick={() => {
-                        onDeactivateStep(step).catch((error) => {
-                          console.error(
-                            "Không thể tắt bước:",
-                            error,
-                          );
-                        });
-                      }}
-                      disabled={!step.IsActive}
-                    >
-                      Tắt
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            <div className={styles.completedNode}>
+              <span className={styles.completedIcon}>
+                ✓
+              </span>
+
+              <span>Hoàn tất</span>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

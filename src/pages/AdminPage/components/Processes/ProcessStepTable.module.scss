@@ -1,0 +1,311 @@
+.panel {
+  border: 1px solid #e1dfdd;
+  border-radius: 10px;
+  padding: 18px;
+  background: #ffffff;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+
+  h3 {
+    margin: 0;
+    color: #1f3b4d;
+    font-size: 17px;
+  }
+}
+
+.description {
+  margin: 5px 0 0;
+  color: #605e5c;
+  font-size: 13px;
+}
+
+.createButton,
+.editButton,
+.deactivateButton {
+  min-height: 34px;
+  border-radius: 5px;
+  padding: 6px 13px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+}
+
+.createButton {
+  border: 1px solid #1f5a7a;
+  background: #1f5a7a;
+  color: #ffffff;
+
+  &:hover:not(:disabled) {
+    background: #174963;
+  }
+}
+
+.flowWrapper {
+  overflow-x: auto;
+  padding: 6px 2px 12px;
+}
+
+.flow {
+  display: flex;
+  align-items: stretch;
+  min-width: max-content;
+}
+
+.stepCard {
+  width: 260px;
+  box-sizing: border-box;
+  border: 1px solid #d8e1e8;
+  border-radius: 10px;
+  padding: 15px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(31, 59, 77, 0.07);
+}
+
+.activeStep {
+  border-top: 4px solid #1f5a7a;
+}
+
+.inactiveStep {
+  border-top: 4px solid #a19f9d;
+  background: #fafafa;
+  opacity: 0.78;
+}
+
+.stepHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.stepNumber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+
+  background: #1f5a7a;
+  color: #ffffff;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.statusBadge {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.activeStatus {
+  background: #dff6dd;
+  color: #107c10;
+}
+
+.inactiveStatus {
+  background: #edebe9;
+  color: #605e5c;
+}
+
+.stepTitle {
+  margin: 14px 0 12px;
+  color: #201f1e;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.stepDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+.detailRow {
+  display: grid;
+  grid-template-columns: 94px minmax(0, 1fr);
+  gap: 8px;
+
+  dt {
+    color: #605e5c;
+    font-size: 11px;
+  }
+
+  dd {
+    min-width: 0;
+    margin: 0;
+    overflow-wrap: anywhere;
+    color: #323130;
+    font-size: 12px;
+    font-weight: 600;
+  }
+}
+
+.stepActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #edebe9;
+}
+
+.editButton {
+  border: 1px solid #c8d8e6;
+  background: #ffffff;
+  color: #1f3b4d;
+
+  &:hover:not(:disabled) {
+    background: #f3f8fd;
+  }
+}
+
+.deactivateButton {
+  border: 1px solid #f3b5ba;
+  background: #fde7e9;
+  color: #a4262c;
+
+  &:hover:not(:disabled) {
+    background: #fbd5d8;
+  }
+}
+
+.connector {
+  display: flex;
+  align-items: center;
+  width: 72px;
+  padding: 0 8px;
+}
+
+.connectorLine {
+  flex: 1;
+  height: 2px;
+  background: #b8c5cf;
+}
+
+.connectorArrow {
+  color: #1f5a7a;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.completedNode {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+
+  width: 100px;
+  min-height: 120px;
+  align-self: center;
+
+  color: #107c10;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.completedIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+
+  background: #dff6dd;
+  color: #107c10;
+
+  font-size: 17px;
+}
+
+.emptyState {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 9px;
+
+  border: 1px dashed #b8c5cf;
+  border-radius: 8px;
+  padding: 30px 20px;
+
+  text-align: center;
+}
+
+.emptyTitle {
+  color: #323130;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.emptyDescription {
+  margin-bottom: 6px;
+  color: #605e5c;
+  font-size: 13px;
+}
+
+@media (max-width: 700px) {
+  .panelHeader {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .createButton {
+    align-self: flex-start;
+  }
+
+  .flowWrapper {
+    overflow-x: visible;
+  }
+
+  .flow {
+    align-items: stretch;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .stepCard {
+    width: 100%;
+  }
+
+  .connector {
+    justify-content: center;
+    width: auto;
+    height: 54px;
+    padding: 5px 0;
+  }
+
+  .connectorLine {
+    flex: 0 0 30px;
+    width: 2px;
+    height: 30px;
+  }
+
+  .connectorArrow {
+    transform: rotate(90deg);
+  }
+
+  .completedNode {
+    width: 100%;
+    min-height: 80px;
+  }
+}

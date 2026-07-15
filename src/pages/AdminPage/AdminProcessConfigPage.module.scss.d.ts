@@ -7,13 +7,6 @@ declare const styles: {
   toolbar: string;
   toolbarButton: string;
   dangerButton: string;
-  panelOverlay: string;
-  editorPanel: string;
-  formGrid: string;
-  formGroup: string;
-  inputControl: string;
-  checkboxRow: string;
-  panelActions: string;
   primaryButton: string;
   secondaryButton: string;
   selectorRow: string;
