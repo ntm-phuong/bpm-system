@@ -5,7 +5,7 @@ import {
   IAdminProcessConfig,
 } from "../../../../services/Admin/AdminProcessConfigService";
 import { AdminFieldConfigService } from "../../../../services/Admin/AdminFieldConfigService";
-import { ProcessSummary } from "../../components/Processes/ProcessSummary";
+// import { ProcessSummary } from "../../components/Processes/ProcessSummary";
 import { IProcessStep, IPerson, IFieldConfig } from "../../../../models";
 import { AdminProcessStepService } from "../../../../services/Admin/AdminProcessStepService";
 import { UserService } from "../../../../services/UserService";
@@ -249,7 +249,7 @@ export const ProcessConfigDetailPage: React.FC<
 
       {!loading && config && (
         <>
-          <ProcessSummary process={config.process} />
+          {/* <ProcessSummary process={config.process} /> */}
 
           <ProcessStepsTable
             steps={config.steps}

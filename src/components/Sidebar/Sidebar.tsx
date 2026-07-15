@@ -6,7 +6,9 @@ import { useSidebarNavigation } from "../../hooks/useSidebarNavigation";
 import { INavigationItem } from "../../types/MenuTypes";
 import styles from "./Sidebar.module.scss";
 
-const bpmLogoUrl: string = require("../../webparts/bpmSystem/assets/bpmLogo.png");
+const bpmLogoUrl: string = require(
+  "../../webparts/bpmSystem/assets/bpmLogo.png",
+);
 
 export interface ISidebarProps {
   selectedItemKey: string;
@@ -22,11 +24,15 @@ export const Sidebar = ({
   onToggleCollapse,
 }: ISidebarProps): JSX.Element => {
   const { setSelectedProcess, setIsLoading } = useApp();
-  const { navigationGroups, loading } = useSidebarNavigation();
 
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
-    {},
-  );
+  const { navigationGroups, loading } =
+    useSidebarNavigation();
+
+  const [expandedGroups, setExpandedGroups] =
+    useState<Record<string, boolean>>({});
+
+  const [isResponsiveMenuOpen, setIsResponsiveMenuOpen] =
+    useState<boolean>(false);
 
   React.useEffect(() => {
     setExpandedGroups((currentGroups) => {
@@ -34,7 +40,8 @@ export const Sidebar = ({
 
       navigationGroups.forEach((group) => {
         if (group.items.length > 0) {
-          nextGroups[group.key] = currentGroups[group.key] ?? true;
+          nextGroups[group.key] =
+            currentGroups[group.key] ?? true;
         }
       });
 
@@ -42,117 +49,262 @@ export const Sidebar = ({
     });
   }, [navigationGroups]);
 
-  const handleToggleGroup = (groupKey: string): void => {
+  React.useEffect(() => {
+    setIsLoading(loading);
+  }, [loading, setIsLoading]);
+
+  React.useEffect(() => {
+    if (!isResponsiveMenuOpen) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === "Escape") {
+        setIsResponsiveMenuOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return (): void => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isResponsiveMenuOpen]);
+
+  const handleToggleGroup = (
+    groupKey: string,
+  ): void => {
     setExpandedGroups((currentGroups) => ({
       ...currentGroups,
       [groupKey]: !currentGroups[groupKey],
     }));
   };
 
-  React.useEffect(() => {
-    setIsLoading(loading);
-  }, [loading, setIsLoading]);
+  const handleGroupSelect = (
+    groupKey: string,
+    hasChildren: boolean,
+  ): void => {
+    if (hasChildren) {
+      handleToggleGroup(groupKey);
+      return;
+    }
+
+    onItemSelect(groupKey);
+    setSelectedProcess(null, null);
+    setIsResponsiveMenuOpen(false);
+  };
+
+  const handleItemSelect = (
+    item: INavigationItem,
+  ): void => {
+    onItemSelect(item.key);
+
+    if (item.type !== "Process") {
+      setSelectedProcess(null, null);
+      setIsResponsiveMenuOpen(false);
+      return;
+    }
+
+    if (!item.processId || !item.processCode) {
+      setSelectedProcess(null, null);
+      setIsResponsiveMenuOpen(false);
+      return;
+    }
+
+    setSelectedProcess(
+      item.processId,
+      item.processCode,
+    );
+    setIsResponsiveMenuOpen(false);
+  };
 
   return (
     <aside
-      className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ""}`}
+      className={`${styles.sidebar} ${
+        isCollapsed ? styles.collapsed : ""
+      }`}
       aria-label="BPM sidebar"
     >
-      <div className={`${styles.logoSection} ${styles.bpmLogo}`}>
-        {!isCollapsed && (
-          <div className={styles.logoWrapper}>
-            <img className={styles.logoImage} src={bpmLogoUrl} alt="BPM logo" />
-          </div>
-        )}
+      <div
+        className={`${styles.logoSection} ${styles.bpmLogo}`}
+      >
+        <div className={styles.logoWrapper}>
+          <img
+            className={styles.logoImage}
+            src={bpmLogoUrl}
+            alt="BPM logo"
+          />
+        </div>
 
         <button
           type="button"
-          className={styles.menuButton}
-          aria-label={isCollapsed ? "Mo rong sidebar" : "Thu gon sidebar"}
+          className={styles.desktopCollapseButton}
+          aria-label={
+            isCollapsed
+              ? "Mở rộng sidebar"
+              : "Thu gọn sidebar"
+          }
           onClick={onToggleCollapse}
         >
           <Icon iconName="GlobalNavButton" />
         </button>
+
+        <button
+          type="button"
+          className={styles.responsiveMenuButton}
+          aria-label={
+            isResponsiveMenuOpen
+              ? "Đóng menu điều hướng"
+              : "Mở menu điều hướng"
+          }
+          aria-controls="bpm-navigation"
+          aria-expanded={isResponsiveMenuOpen}
+          onClick={() => {
+            setIsResponsiveMenuOpen((currentState) => !currentState);
+          }}
+        >
+          <Icon iconName={isResponsiveMenuOpen ? "Cancel" : "GlobalNavButton"} />
+        </button>
       </div>
 
-      <nav className={styles.navigation}>
+      <nav
+        id="bpm-navigation"
+        className={`${styles.navigation} ${
+          isResponsiveMenuOpen ? styles.responsiveNavigationOpen : ""
+        }`}
+      >
         {navigationGroups.map((group) => {
-          const hasChildren = group.items.length > 0;
-          const processItems: INavigationItem[] = group.items;
+          const hasChildren =
+            group.items.length > 0;
 
-          const isExpanded = !!expandedGroups[group.key];
+          const processItems: INavigationItem[] =
+            group.items;
+
+          const isExpanded =
+            Boolean(expandedGroups[group.key]);
+
+          const isGroupSelected =
+            selectedItemKey === group.key;
+
+          const hasSelectedChild =
+            processItems.some(
+              (item) =>
+                item.key === selectedItemKey,
+            );
+
+          const isGroupActive =
+            isGroupSelected || hasSelectedChild;
 
           return (
-            <section className={styles.group} key={group.key}>
+            <section
+              className={styles.group}
+              key={group.key}
+            >
               <button
                 type="button"
-                className={styles.groupButton}
-                onClick={() => {
-                  if (!hasChildren) {
-                    onItemSelect(group.key);
-                    setSelectedProcess(null, null);
-                    return;
-                  }
-
-                  handleToggleGroup(group.key);
-                }}
-                aria-expanded={hasChildren ? isExpanded : undefined}
+                className={`${styles.groupButton} ${
+                  isGroupActive
+                    ? styles.activeGroupButton
+                    : ""
+                }`}
+                onClick={() =>
+                  handleGroupSelect(
+                    group.key,
+                    hasChildren,
+                  )
+                }
+                aria-expanded={
+                  hasChildren
+                    ? isExpanded
+                    : undefined
+                }
                 title={group.title}
               >
                 <span className={styles.groupHeading}>
                   <span className={styles.itemLeading}>
-                    <Icon iconName={group.iconName} />
+                    <Icon
+                      iconName={group.iconName}
+                    />
                   </span>
-                  <span className={styles.groupTitle}>{group.title}</span>
+
+                  <span className={styles.groupTitle}>
+                    {group.title}
+                  </span>
                 </span>
+
                 {hasChildren && (
                   <Icon
                     className={styles.toggleIcon}
-                    iconName={isExpanded ? "ChevronDown" : "ChevronRight"}
+                    iconName={
+                      isExpanded
+                        ? "ChevronDown"
+                        : "ChevronRight"
+                    }
                   />
                 )}
               </button>
 
-              {isExpanded && !isCollapsed && hasChildren && (
-                <div className={styles.groupItems}>
-                  {group.key === "createProcess" && loading && (
-                    <span className={styles.groupEmpty}>
-                      Dang tai quy trinh...
-                    </span>
-                  )}
-                  {group.key === "createProcess" &&
-                    !loading &&
-                    processItems.length === 0 && (
-                      <span className={styles.groupEmpty}>
-                        Khong co quy trinh active
-                      </span>
-                    )}
-                  {processItems.map((item) => (
-                    <button
-                      type="button"
-                      key={item.key}
-                      className={`${styles.childItem} ${selectedItemKey === item.key ? styles.selectedItem : ""}`}
-                      onClick={() => {
-                        onItemSelect(item.key);
-                        if (item.type === "Process") {
-                          if (!item.processId || !item.processCode) {
-                            setSelectedProcess(null, null);
-                            return;
+              {isExpanded && hasChildren && (
+                  <div className={styles.groupItems}>
+                    {group.key ===
+                      "createProcess" &&
+                      loading && (
+                        <span
+                          className={
+                            styles.groupEmpty
                           }
+                        >
+                          Đang tải quy trình...
+                        </span>
+                      )}
 
-                          setSelectedProcess(item.processId, item.processCode);
-                        } else {
-                          setSelectedProcess(null, null);
+                    {group.key ===
+                      "createProcess" &&
+                      !loading &&
+                      processItems.length === 0 && (
+                        <span
+                          className={
+                            styles.groupEmpty
+                          }
+                        >
+                          Không có quy trình đang hoạt
+                          động
+                        </span>
+                      )}
+
+                    {processItems.map((item) => (
+                      <button
+                        type="button"
+                        key={item.key}
+                        className={`${
+                          styles.childItem
+                        } ${
+                          selectedItemKey === item.key
+                            ? styles.selectedItem
+                            : ""
+                        }`}
+                        onClick={() =>
+                          handleItemSelect(item)
                         }
-                      }}
-                      title={item.label}
-                    >
-                      <span className={styles.itemLeading}></span>
-                      <span className={styles.itemLabel}>{item.label}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
+                        title={item.label}
+                      >
+                        <span
+                          className={
+                            styles.itemLeading
+                          }
+                        />
+
+                        <span
+                          className={
+                            styles.itemLabel
+                          }
+                        >
+                          {item.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
             </section>
           );
         })}
